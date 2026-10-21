@@ -1,0 +1,17 @@
+{
+  "name": "dayz-launcher",
+  "version": "1.0.0",
+  "description": "Launcher DayZ : serveurs officiels, communautaires, LAN et gestion des mods Workshop",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "steamworks.js": "0.4.0"
+  },
+  "devDependencies": {
+    "electron": "38.2.0"
+  }
+}

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>DayZ Launcher</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">DZ</span>
+      <div>
+        <div class="brand-title">DayZ Launcher</div>
+        <div class="brand-sub" id="build-info">—</div>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-view="servers">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v5H4zM4 14h16v5H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="7.5" cy="7.5" r="1" fill="currentColor"/><circle cx="7.5" cy="16.5" r="1" fill="currentColor"/></svg>
+        Serveurs
+      </button>
+      <button class="nav-item" data-view="mods">
+        <svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z M12 12l8-4.5 M12 12v9 M12 12L4 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Mods
+        <span class="badge hidden" id="mods-badge"></span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Paramètres
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost w-full" id="btn-play-menu">Lancer DayZ (menu)</button>
+      <div class="install-state" id="install-state"></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ======================= SERVEURS ======================= -->
+    <section class="view" id="view-servers">
+      <header class="view-header">
+        <div class="tabs" id="server-tabs">
+          <button class="tab active" data-tab="official">Officiels <span class="count" data-count="official"></span></button>
+          <button class="tab" data-tab="community">Communautaires <span class="count" data-count="community"></span></button>
+          <button class="tab" data-tab="lan">LAN / Direct <span class="count" data-count="lan"></span></button>
+          <button class="tab" data-tab="favorites">Favoris <span class="count" data-count="favorites"></span></button>
+          <button class="tab" data-tab="history">Historique <span class="count" data-count="history"></span></button>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" id="btn-refresh" title="Recharger la liste">
+            <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Actualiser
+          </button>
+        </div>
+      </header>
+
+      <div class="filters">
+        <input type="search" id="f-search" placeholder="Rechercher un serveur, une IP, un mod…">
+        <select id="f-map"><option value="">Toutes les cartes</option></select>
+        <label class="chk"><input type="checkbox" id="f-hide-empty"> Masquer vides</label>
+        <label class="chk"><input type="checkbox" id="f-hide-full"> Masquer pleins</label>
+        <label class="chk"><input type="checkbox" id="f-no-pass"> Sans mot de passe</label>
+        <select id="f-persp">
+          <option value="">1PP + 3PP</option>
+          <option value="1pp">1ère personne</option>
+          <option value="3pp">3ème personne</option>
+        </select>
+        <select id="f-mods">
+          <option value="">Avec ou sans mods</option>
+          <option value="vanilla">Vanilla</option>
+          <option value="modded">Moddés</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="f-same-version" checked> Ma version</label>
+      </div>
+
+      <div class="lan-bar hidden" id="lan-bar">
+        <button class="btn" id="btn-lan-scan">Scanner le réseau local</button>
+        <span class="sep"></span>
+        <input id="manual-ip" placeholder="Adresse IP / nom d'hôte">
+        <input id="manual-port" placeholder="Port query (27016)" class="port">
+        <button class="btn btn-ghost" id="btn-add-manual">Ajouter</button>
+        <span class="hint" id="lan-hint"></span>
+      </div>
+
+      <div class="split">
+        <div class="table-wrap">
+          <div class="table-head server-row">
+            <span></span>
+            <span data-sort="name">Nom</span>
+            <span data-sort="map">Carte</span>
+            <span data-sort="players" class="num">Joueurs</span>
+            <span data-sort="ping" class="num">Ping</span>
+            <span data-sort="mods" class="num">Mods</span>
+            <span data-sort="time" class="num">Heure</span>
+          </div>
+          <div class="table-body" id="server-list">
+            <div class="spacer" id="server-spacer"></div>
+          </div>
+          <div class="table-empty hidden" id="server-empty"></div>
+          <div class="table-foot" id="server-foot"></div>
+        </div>
+
+        <aside class="details" id="details">
+          <div class="details-empty">Sélectionnez un serveur pour voir ses détails et ses mods.</div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ======================= MODS ======================= -->
+    <section class="view hidden" id="view-mods">
+      <header class="view-header">
+        <h1>Mods Workshop</h1>
+        <div class="header-actions">
+          <button class="btn btn-ghost" id="btn-mods-check">Vérifier les mises à jour</button>
+          <button class="btn" id="btn-mods-update">Tout mettre à jour</button>
+        </div>
+      </header>
+      <div class="filters">
+        <input type="search" id="m-search" placeholder="Filtrer les mods…">
+        <label class="chk"><input type="checkbox" id="m-outdated"> Seulement les mises à jour</label>
+        <span class="grow"></span>
+        <input id="m-add-id" placeholder="ID ou lien Workshop" class="add-id">
+        <button class="btn btn-ghost" id="btn-mod-add">Installer</button>
+        <button class="btn btn-danger" id="btn-mods-remove" disabled>Désinstaller la sélection</button>
+      </div>
+      <div class="mods-summary" id="mods-summary"></div>
+      <div class="table-wrap">
+        <div class="table-head mod-row">
+          <span><input type="checkbox" id="m-all"></span>
+          <span>Nom</span>
+          <span>ID Workshop</span>
+          <span class="num">Taille</span>
+          <span>Mis à jour</span>
+          <span>État</span>
+          <span></span>
+        </div>
+        <div class="table-body plain" id="mod-list"></div>
+      </div>
+    </section>
+
+    <!-- ======================= PARAMÈTRES ======================= -->
+    <section class="view hidden" id="view-settings">
+      <header class="view-header"><h1>Paramètres</h1></header>
+      <form class="settings" id="settings-form">
+        <fieldset>
+          <legend>Jeu</legend>
+          <label>Nom du personnage / profil
+            <input name="profileName" placeholder="Survivant" maxlength="64">
+          </label>
+          <label>Dossier de DayZ
+            <div class="row">
+              <input name="dayzPath" placeholder="Détection automatique via Steam">
+              <button type="button" class="btn btn-ghost" id="btn-pick-path">Parcourir…</button>
+            </div>
+          </label>
+          <label>Paramètres de lancement supplémentaires
+            <input name="extraArgs" placeholder="-cpuCount=8 -maxMem=16384 -noPause">
+          </label>
+          <label class="chk"><input type="checkbox" name="battlEye"> Lancer avec BattlEye (requis pour les serveurs officiels et la plupart des communautaires)</label>
+        </fieldset>
+        <fieldset>
+          <legend>Mods &amp; serveurs</legend>
+          <label class="chk"><input type="checkbox" name="autoUpdateMods"> Mettre à jour automatiquement les mods avant de rejoindre un serveur</label>
+          <label class="chk"><input type="checkbox" name="pingOnLoad"> Mesurer le ping des serveurs affichés</label>
+        </fieldset>
+        <div class="settings-actions">
+          <button class="btn" type="submit">Enregistrer</button>
+          <button class="btn btn-ghost" type="button" id="btn-open-dayz">Ouvrir le dossier de DayZ</button>
+          <button class="btn btn-ghost" type="button" id="btn-clear-history">Vider l'historique</button>
+        </div>
+        <p class="about" id="about"></p>
+      </form>
+    </section>
+  </main>
+
+  <!-- Fenêtre de progression -->
+  <div class="overlay hidden" id="overlay">
+    <div class="modal">
+      <h2 id="ov-title">Connexion</h2>
+      <p id="ov-message"></p>
+      <div class="progress"><div class="bar" id="ov-bar"></div></div>
+      <p class="ov-detail" id="ov-detail"></p>
+      <div class="modal-actions"><button class="btn btn-ghost hidden" id="ov-close">Fermer</button></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <script src="app.js"></script>
+</body>
+</html>
