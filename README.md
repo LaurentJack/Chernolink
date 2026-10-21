@@ -1,4 +1,4 @@
-<img width="512" height="512" alt="icon" src="https://github.com/user-attachments/assets/d75c1efd-5d8a-441c-86db-9137d3896003" />
+<p align="center"><img width="512" height="512" alt="icon" src="https://github.com/user-attachments/assets/d75c1efd-5d8a-441c-86db-9137d3896003" /></p>
 
 
 <h1 align="center">Chernolink</h1>
@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/serveurs.png" alt="Navigateur de serveurs Chernolink" width="900">
+  <img width="1344" height="801" alt="serveurs" src="https://github.com/user-attachments/assets/18931089-3d1c-4473-90a9-65c79d519920" />
 </p>
 
 ---
@@ -36,7 +36,7 @@
 - **Nettoyage** : désinstallation, et repérage des dossiers « orphelins » restés sur le disque après un désabonnement, ou des mods retirés du Workshop.
 
 <p align="center">
-  <img src="docs/mods.png" alt="Gestion des mods" width="900">
+ <img width="1344" height="801" alt="mods" src="https://github.com/user-attachments/assets/129c93b0-7c73-4d65-829f-a1bc47cdb3c8" />
 </p>
 
 ### Paramètres
