@@ -1,4 +1,6 @@
-# DayZ Launcher
+<p align="center"><img src="assets/icon.png" width="128" alt="Chernolink"></p>
+
+# Chernolink
 
 Launcher Windows (Electron) pour DayZ : navigateur de serveurs officiels, communautaires et LAN, et gestion des mods Steam Workshop (installation et mises à jour automatiques).
 

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a3034"/>
+      <stop offset="1" stop-color="#111315"/>
+    </linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0cf7a"/>
+      <stop offset="1" stop-color="#b8892f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff7a5c" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ff7a5c" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="clip"><rect x="16" y="16" width="480" height="480" rx="108"/></clipPath>
+  </defs>
+
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bg)"/>
+
+  <g clip-path="url(#clip)">
+    <!-- Ondes radio -->
+    <g fill="none" stroke="url(#brass)" stroke-linecap="round" stroke-width="18">
+      <path d="M206 108 A70 70 0 0 0 206 196" opacity="0.95"/>
+      <path d="M306 108 A70 70 0 0 1 306 196" opacity="0.95"/>
+      <path d="M166 74 A118 118 0 0 0 166 230" opacity="0.6"/>
+      <path d="M346 74 A118 118 0 0 1 346 230" opacity="0.6"/>
+      <path d="M126 40 A166 166 0 0 0 126 264" opacity="0.3"/>
+      <path d="M386 40 A166 166 0 0 1 386 264" opacity="0.3"/>
+    </g>
+
+    <!-- Pylône en treillis -->
+    <g stroke="url(#brass)" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M256 152 L196 420 M256 152 L316 420" stroke-width="16"/>
+      <path d="M236 242 L276 242 M222 304 L290 304 M208 366 L304 366" stroke-width="10"/>
+      <path d="M241 210 L276 242 L222 304 L290 304 L208 366 L304 366 L196 420" stroke-width="7" opacity="0.85"/>
+    </g>
+
+    <!-- Balise -->
+    <circle cx="256" cy="152" r="46" fill="url(#glow)"/>
+    <circle cx="256" cy="152" r="17" fill="#e8654c"/>
+    <circle cx="251" cy="147" r="5" fill="#ffd2c4"/>
+
+    <!-- Forêt de Chernarus -->
+    <path fill="#1a221f" d="
+      M16 496 L16 440 L40 440 L62 372 L84 440 L96 440 L122 352 L148 440 L160 440 L180 396 L200 440
+      L312 440 L332 396 L352 440 L364 440 L390 352 L416 440 L428 440 L450 372 L472 440 L496 440 L496 496 Z"/>
+    <rect x="16" y="436" width="480" height="60" fill="#1a221f"/>
+  </g>
+
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="none" stroke="#3a4146" stroke-width="4"/>
+</svg>

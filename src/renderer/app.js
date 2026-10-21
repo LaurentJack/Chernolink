@@ -706,7 +706,7 @@ window.addEventListener('resize', () => renderServers(false));
     state.history = init.history;
     fillSettings(init.settings);
     renderInstall(init);
-    $('#about').textContent = `DayZ Launcher ${init.version} — liste des serveurs : dayzsalauncher.com ; mods : Steam Workshop (via votre client Steam). `
+    $('#about').textContent = `Chernolink ${init.version} — liste des serveurs : dayzsalauncher.com ; mods : Steam Workshop (via votre client Steam). `
       + `Workshop : ${init.install.workshopPath || 'introuvable'}`;
     updateCounts();
   } catch (e) {

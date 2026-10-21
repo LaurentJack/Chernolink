@@ -10,6 +10,12 @@ const mods = require('./core/mods');
 const { launchGame } = require('./core/launcher');
 const { Store, DEFAULTS } = require('./core/store');
 
+// Le nom affiché a changé : on conserve le dossier de données d'origine (favoris, paramètres).
+app.setPath('userData', path.join(app.getPath('appData'), 'dayz-launcher'));
+app.setAppUserModelId('com.chernolink.launcher');
+
+const ICON = path.join(__dirname, '..', 'assets', 'icon.ico');
+
 let win;
 let store;
 let install = {};
@@ -24,7 +30,7 @@ const jobs = new Map();
 function getWorker() {
   if (worker) return worker;
   worker = utilityProcess.fork(path.join(__dirname, 'core', 'workshop-worker.js'), [], {
-    serviceName: 'DayZ Launcher Workshop',
+    serviceName: 'Chernolink Workshop',
     cwd: app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'),
   });
   worker.on('message', (msg) => {
@@ -226,7 +232,8 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 640,
     backgroundColor: '#101214',
-    title: 'DayZ Launcher',
+    title: 'Chernolink',
+    icon: ICON,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

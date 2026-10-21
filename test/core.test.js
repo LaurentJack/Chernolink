@@ -69,6 +69,14 @@ test('parseInfo extrait les mots-clés DayZ', () => {
   assert.strictEqual(info.time, '14:05');
 });
 
+test('normalize déduit la 1PP du nom quand le serveur ne l\'annonce pas', () => {
+  const fp = (name) => normalize({ ip: '1.1.1.1', queryPort: 1, name }, 'master').firstPersonOnly;
+  assert.strictEqual(fp('0801 | EUROPE - DE | 1st Person Only'), true);
+  assert.strictEqual(fp('KarmaKrew #3 NA - 1PP | VANILLA'), true);
+  assert.strictEqual(fp('Serveur FR | 1PP/3PP'), false);
+  assert.strictEqual(fp('The Last Breath | PVP'), false);
+});
+
 test('normalize classe les serveurs officiels', () => {
   const s = normalize({ endpoint: { ip: '1.2.3.4', port: 27016 }, gamePort: 2302, name: 'DayZ FR 1', shard: 'public', mods: [] }, 'master');
   assert.strictEqual(s.id, '1.2.3.4:2302');

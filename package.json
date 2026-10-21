@@ -1,7 +1,8 @@
 {
   "name": "dayz-launcher",
+  "productName": "Chernolink",
   "version": "1.0.0",
-  "description": "Launcher DayZ : serveurs officiels, communautaires, LAN et gestion des mods Workshop",
+  "description": "Chernolink, launcher DayZ : serveurs officiels, communautaires, LAN et gestion des mods Workshop",
   "main": "src/main.js",
   "private": true,
   "scripts": {
