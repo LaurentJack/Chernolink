@@ -7,12 +7,51 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/"
+    "test": "node --test test/",
+    "dist": "electron-builder --win nsis portable"
   },
   "dependencies": {
     "steamworks.js": "0.4.0"
   },
   "devDependencies": {
-    "electron": "38.2.0"
+    "electron": "38.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "author": "Jack",
+  "build": {
+    "appId": "com.chernolink.launcher",
+    "productName": "Chernolink",
+    "copyright": "Chernolink",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/icon.svg",
+      "assets/icon.ico",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/steamworks.js/**"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "shortcutName": "Chernolink",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico"
+    },
+    "portable": {
+      "artifactName": "Chernolink-${version}-portable.exe"
+    },
+    "artifactName": "Chernolink-${version}-setup.${ext}"
   }
 }

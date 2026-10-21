@@ -13,6 +13,16 @@ npm start
 
 Prérequis : Windows x64, Node.js 20+, Steam lancé et connecté au compte qui possède DayZ.
 
+## Créer l'exécutable
+
+```bash
+npm run dist
+```
+
+Produit dans `dist/` un installateur (`Chernolink-<version>-setup.exe`) et une version portable (`Chernolink-<version>-portable.exe`).
+
+Si la compilation échoue avec « Cannot create symbolic link » (extraction de `winCodeSign`), activez le mode développeur de Windows ou lancez une fois la commande dans un terminal administrateur.
+
 ## Fonctionnalités
 
 - **Serveurs officiels / communautaires** : liste maître (~11 000 serveurs) récupérée depuis l'API publique de DZSA Launcher. Filtres (carte, vides/pleins, mot de passe, 1PP/3PP, vanilla/moddé, version du jeu), recherche (nom, IP, nom de mod), tri, ping mesuré en direct (A2S) sur les lignes visibles.
