@@ -153,6 +153,54 @@ function cleanupLinks(install) {
   return removed;
 }
 
+// ---------------------------------------------------------------------------
+// Dépendances (« Required items ») : l'API publique ne les expose pas sans clé,
+// on les lit sur la page Workshop.
+// ---------------------------------------------------------------------------
+const depsCache = new Map();
+const REQUIRED_ITEM = /<a href="[^"]*filedetails\/\?id=(\d+)"[^>]*>\s*<div class="requiredItem">\s*([^<]*?)\s*<\/div>/g;
+
+function parseRequiredItems(html) {
+  return [...html.matchAll(REQUIRED_ITEM)].map((m) => ({ id: m[1], name: m[2].trim() }));
+}
+
+async function fetchDependencies(id) {
+  if (depsCache.has(id)) return depsCache.get(id);
+  const res = await fetch(`https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(id)}`, {
+    headers: { 'Accept-Language': 'en' },
+  });
+  if (!res.ok) throw new Error(`Page Workshop inaccessible pour ${id} (HTTP ${res.status})`);
+  const deps = parseRequiredItems(await res.text()).filter((d) => d.id !== id);
+  depsCache.set(id, deps);
+  return deps;
+}
+
+/**
+ * Ajoute récursivement les dépendances et renvoie la liste dans l'ordre de chargement
+ * (dépendances avant les mods qui en ont besoin). Une page inaccessible n'est pas bloquante.
+ */
+async function withDependencies(mods, fetchDeps = fetchDependencies) {
+  const order = [];
+  const seen = new Set();
+  const names = new Map(mods.map((m) => [m.id, m.name]));
+  const requested = new Set(mods.map((m) => m.id));
+
+  async function visit(id, depth) {
+    if (seen.has(id) || depth > 8) return;
+    seen.add(id);
+    let deps = [];
+    try { deps = await fetchDeps(id); } catch { /* on lance sans les dépendances de ce mod */ }
+    for (const d of deps) {
+      if (!names.has(d.id)) names.set(d.id, d.name);
+      await visit(d.id, depth + 1);
+    }
+    order.push({ id, name: names.get(id) || id, dependency: !requested.has(id) });
+  }
+
+  for (const m of mods) await visit(m.id, 0);
+  return order;
+}
+
 /** Supprime du disque les dossiers de mods ; renvoie les ID supprimés et les échecs. */
 function removeFolders(install, ids) {
   const removed = [];
@@ -170,4 +218,4 @@ function removeFolders(install, ids) {
   return { removed, failed };
 }
 
-module.exports = { removeFolders, listInstalled, fetchDetails, checkUpdates, resolveServerMods, buildModParam, cleanupLinks, LINK_DIR };
+module.exports = { withDependencies, parseRequiredItems, fetchDependencies, removeFolders, listInstalled, fetchDetails, checkUpdates, resolveServerMods, buildModParam, cleanupLinks, LINK_DIR };

@@ -21,11 +21,17 @@ contextBridge.exposeInMainWorld('api', {
   },
   favorites: { toggle: (s) => invoke('favorites:toggle', s) },
   history: { clear: () => invoke('history:clear') },
+  presets: {
+    save: (name, ids) => invoke('presets:save', { name, ids }),
+    delete: (name) => invoke('presets:delete', name),
+  },
+  offline: { remember: (opts) => invoke('offline:remember', opts) },
   mods: {
     list: () => invoke('mods:list'),
     resolve: (m) => invoke('mods:resolve', m),
     download: (ids) => invoke('mods:download', ids),
     remove: (ids) => invoke('mods:remove', ids),
+    withDependencies: (list) => invoke('mods:withDependencies', list),
     openFolder: (id) => invoke('mods:openFolder', id),
     openPage: (id) => invoke('mods:openPage', id),
   },

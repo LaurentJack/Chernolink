@@ -35,6 +35,7 @@
 - **Mises à jour** : comparaison avec le Steam Workshop, mise à jour d'un mod ou de tous d'un coup.
 - **Installation** d'un mod par son ID ou son lien Workshop.
 - **Nettoyage** : désinstallation, et repérage des dossiers « orphelins » restés sur le disque après un désabonnement, ou des mods retirés du Workshop.
+- **Jouer sans serveur avec des mods** (DayZ-Editor, mode hors-ligne, tests) : bouton **Lancer DayZ…** ou **Jouer avec la sélection** dans l'onglet Mods. Les dépendances Workshop sont ajoutées et téléchargées automatiquement dans le bon ordre de chargement (DayZ-Editor → CF, Dabs Framework), et les sélections s'enregistrent en préréglages.
 
 <p align="center">
   <img src="docs/mods.png" alt="Gestion des mods" width="900">

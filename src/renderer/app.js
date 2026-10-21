@@ -510,10 +510,133 @@ async function joinSelected() {
   }
 }
 
-$('#btn-play-menu').addEventListener('click', async () => {
-  overlay.open('Lancement de DayZ', 'Lancement sans serveur…');
-  try { await api.game.join({ server: null }); } catch (e) { overlay.fail(e.message); }
+// ---------------------------------------------------------------------------
+// Lancement hors serveur avec une sélection de mods (éditeur, hors-ligne…)
+// ---------------------------------------------------------------------------
+const offline = { selected: [], presets: [], depsToken: 0 };
+
+async function openOffline(preselect) {
+  if (!state.mods.length) {
+    try { state.mods = await api.mods.list(); } catch (e) { toast(e.message, 'error'); }
+  }
+  const remembered = state.init?.offlineLaunch || { ids: [], battlEye: false };
+  const known = new Set(state.mods.map((m) => m.id));
+  offline.selected = (preselect || remembered.ids).filter((id) => known.has(id));
+  $('#off-be').checked = !!remembered.battlEye;
+  $('#off-search').value = '';
+  renderPresets();
+  renderOffline();
+  $('#offline').classList.remove('hidden');
+  $('#off-search').focus();
+}
+
+function closeOffline() { $('#offline').classList.add('hidden'); }
+
+function renderPresets() {
+  $('#off-preset').innerHTML = '<option value="">Préréglages…</option>'
+    + offline.presets.map((p) => `<option value="${esc(p.name)}">${esc(p.name)} (${p.ids.length})</option>`).join('');
+  $('#off-preset-delete').disabled = true;
+}
+
+function renderOffline() {
+  const q = $('#off-search').value.trim().toLowerCase();
+  const chosen = new Set(offline.selected);
+  // Mods cochés en premier, puis ordre alphabétique.
+  const list = state.mods
+    .filter((m) => !m.removed && (!q || m.name.toLowerCase().includes(q) || m.id.includes(q)))
+    .sort((a, b) => (chosen.has(b.id) - chosen.has(a.id)) || a.name.localeCompare(b.name));
+  $('#off-list').innerHTML = list.length ? list.map((m) => `
+    <label class="off-item${chosen.has(m.id) ? ' on' : ''}">
+      <input type="checkbox" data-off="${esc(m.id)}" ${chosen.has(m.id) ? 'checked' : ''}>
+      <span class="n" title="${esc(m.name)}">${esc(m.name)}</span>
+      ${m.orphan ? '<span class="tag">non abonné</span>' : ''}
+      <small>${esc(m.id)}</small>
+    </label>`).join('') : '<div class="table-empty" style="position:static">Aucun mod installé ne correspond.</div>';
+  updateOfflineSummary();
+}
+
+function selectedMods() {
+  return offline.selected.map((id) => ({ id, name: state.mods.find((m) => m.id === id)?.name || id }));
+}
+
+let depsTimer;
+function updateOfflineSummary() {
+  const box = $('#off-summary');
+  $('#off-launch').textContent = offline.selected.length ? `Lancer avec ${offline.selected.length} mod(s)` : 'Lancer DayZ sans mod';
+  clearTimeout(depsTimer);
+  const token = ++offline.depsToken;
+  if (!offline.selected.length) { box.textContent = 'Aucun mod sélectionné : DayZ sera lancé en version vanilla.'; return; }
+  box.textContent = 'Recherche des dépendances…';
+  depsTimer = setTimeout(async () => {
+    try {
+      const order = await api.mods.withDependencies(selectedMods());
+      if (token !== offline.depsToken) return;
+      const installed = new Set(state.mods.map((m) => m.id));
+      const deps = order.filter((m) => m.dependency);
+      const missing = order.filter((m) => !installed.has(m.id));
+      box.innerHTML = `Ordre de chargement : ${order.map((m) => (m.dependency ? `<span class="dep">${esc(m.name)}</span>` : `<b>${esc(m.name)}</b>`)).join(' → ')}`
+        + (deps.length ? `<br><span class="dep">${deps.length} dépendance(s) ajoutée(s) automatiquement</span>` : '')
+        + (missing.length ? ` — ${missing.length} à télécharger` : '');
+    } catch {
+      if (token === offline.depsToken) box.textContent = 'Dépendances indisponibles (Workshop injoignable) : seuls les mods cochés seront chargés.';
+    }
+  }, 350);
+}
+
+$('#off-list').addEventListener('change', (e) => {
+  const id = e.target.dataset.off;
+  if (!id) return;
+  offline.selected = e.target.checked ? [...offline.selected, id] : offline.selected.filter((x) => x !== id);
+  e.target.closest('.off-item').classList.toggle('on', e.target.checked);
+  updateOfflineSummary();
 });
+$('#off-search').addEventListener('input', renderOffline);
+$('#off-cancel').addEventListener('click', closeOffline);
+$('#offline').addEventListener('click', (e) => { if (e.target.id === 'offline') closeOffline(); });
+
+$('#off-preset').addEventListener('change', (e) => {
+  const p = offline.presets.find((x) => x.name === e.target.value);
+  $('#off-preset-delete').disabled = !p;
+  if (!p) return;
+  const known = new Set(state.mods.map((m) => m.id));
+  const absent = p.ids.filter((id) => !known.has(id));
+  offline.selected = p.ids.filter((id) => known.has(id));
+  if (absent.length) toast(`${absent.length} mod(s) du préréglage ne sont plus installés`, 'error');
+  renderOffline();
+});
+$('#off-preset-save').addEventListener('click', async () => {
+  if (!offline.selected.length) return toast('Cochez au moins un mod', 'error');
+  const name = (window.prompt('Nom du préréglage :', $('#off-preset').value || 'Éditeur') || '').trim();
+  if (!name) return;
+  offline.presets = await api.presets.save(name, offline.selected);
+  renderPresets();
+  $('#off-preset').value = name;
+  $('#off-preset-delete').disabled = false;
+  toast(`Préréglage « ${name} » enregistré`, 'ok');
+});
+$('#off-preset-delete').addEventListener('click', async () => {
+  const name = $('#off-preset').value;
+  if (!name || !window.confirm(`Supprimer le préréglage « ${name} » ?`)) return;
+  offline.presets = await api.presets.delete(name);
+  renderPresets();
+});
+
+$('#off-launch').addEventListener('click', async () => {
+  const battlEye = $('#off-be').checked;
+  const opts = { ids: offline.selected, battlEye };
+  api.offline.remember(opts).catch(() => {});
+  if (state.init) state.init.offlineLaunch = opts;
+  closeOffline();
+  overlay.open('Lancement de DayZ', offline.selected.length ? 'Préparation des mods…' : 'Lancement sans serveur…');
+  try {
+    await api.game.join({ server: null, extraMods: selectedMods(), battlEye });
+  } catch (e) {
+    overlay.fail(e.message);
+  }
+});
+
+$('#btn-play-menu').addEventListener('click', () => openOffline());
+$('#btn-mods-play').addEventListener('click', () => openOffline([...state.modSelection]));
 
 $('#btn-refresh').addEventListener('click', () => {
   if (state.tab === 'lan') scanLan(); else loadMaster();
@@ -553,6 +676,7 @@ function renderMods() {
   badge.classList.toggle('hidden', !outdated.length);
   $('#btn-mods-update').disabled = !outdated.length;
   $('#btn-mods-remove').disabled = !state.modSelection.size;
+  $('#btn-mods-play').disabled = !state.modSelection.size;
 
   $('#mod-list').innerHTML = list.length ? list.map((m) => {
     const st = m.removed ? ['removed', 'Retiré du Workshop']
@@ -586,6 +710,7 @@ $('#mod-list').addEventListener('click', async (e) => {
   if (t.dataset.sel) {
     t.checked ? state.modSelection.add(t.dataset.sel) : state.modSelection.delete(t.dataset.sel);
     $('#btn-mods-remove').disabled = !state.modSelection.size;
+    $('#btn-mods-play').disabled = !state.modSelection.size;
   } else if (t.dataset.update) {
     await downloadMods([t.dataset.update], 'Mise à jour du mod');
   } else if (t.dataset.folder) {
@@ -703,6 +828,7 @@ window.addEventListener('resize', () => renderServers(false));
     const init = await api.init();
     state.init = init;
     state.favorites = init.favorites;
+    offline.presets = init.modPresets || [];
     state.history = init.history;
     fillSettings(init.settings);
     renderInstall(init);

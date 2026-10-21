@@ -31,7 +31,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="btn btn-ghost w-full" id="btn-play-menu">Lancer DayZ (menu)</button>
+      <button class="btn btn-ghost w-full" id="btn-play-menu" title="Lancer DayZ sans serveur, avec ou sans mods">Lancer DayZ…</button>
       <div class="install-state" id="install-state"></div>
     </div>
   </aside>
@@ -122,6 +122,7 @@
         <span class="grow"></span>
         <input id="m-add-id" placeholder="ID ou lien Workshop" class="add-id">
         <button class="btn btn-ghost" id="btn-mod-add">Installer</button>
+        <button class="btn btn-ghost" id="btn-mods-play" disabled title="Lancer DayZ hors serveur avec les mods cochés">Jouer avec la sélection</button>
         <button class="btn btn-danger" id="btn-mods-remove" disabled>Désinstaller la sélection</button>
       </div>
       <div class="mods-summary" id="mods-summary"></div>
@@ -173,6 +174,28 @@
       </form>
     </section>
   </main>
+
+  <!-- Lancement hors serveur avec des mods -->
+  <div class="overlay hidden" id="offline">
+    <div class="modal modal-wide">
+      <h2>Lancer DayZ avec des mods</h2>
+      <p>Pour l'éditeur, le mode hors-ligne ou tester des mods sans rejoindre de serveur. Les dépendances requises (CF, Dabs Framework…) sont ajoutées et téléchargées automatiquement.</p>
+      <div class="off-presets">
+        <select id="off-preset"><option value="">Préréglages…</option></select>
+        <button class="btn btn-ghost" id="off-preset-save">Enregistrer la sélection</button>
+        <button class="btn btn-danger" id="off-preset-delete" disabled>Supprimer</button>
+      </div>
+      <input type="search" id="off-search" placeholder="Rechercher un mod installé…">
+      <div class="off-list" id="off-list"></div>
+      <div class="off-summary" id="off-summary"></div>
+      <div class="off-foot">
+        <label class="chk"><input type="checkbox" id="off-be"> Lancer avec BattlEye</label>
+        <span class="grow"></span>
+        <button class="btn btn-ghost" id="off-cancel">Annuler</button>
+        <button class="btn" id="off-launch">Lancer DayZ</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Fenêtre de progression -->
   <div class="overlay hidden" id="overlay">

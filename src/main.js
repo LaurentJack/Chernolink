@@ -88,14 +88,18 @@ function serverSnapshot(s) {
 }
 
 /** Télécharge / met à jour les mods nécessaires puis lance le jeu. */
-async function joinServer({ server, password, extraMods = [] }) {
-  const settings = store.get('settings');
+async function joinServer({ server, password, extraMods = [], battlEye }) {
+  const settings = { ...store.get('settings'), ...(battlEye === undefined ? {} : { battlEye }) };
   let required = server ? server.mods : [];
   if (server && server.source !== 'master') {
     // Infos fraîches pour les serveurs LAN / manuels / favoris.
     try { required = (await servers.refreshServer(server.ip, server.queryPort, server.source)).mods; } catch { /* garder la liste connue */ }
   }
-  required = [...required, ...extraMods.filter((id) => !required.some((m) => m.id === id)).map((id) => ({ id, name: id }))];
+  if (!server && extraMods.length) {
+    // Lancement hors serveur : on ajoute les dépendances Workshop (ex. DayZ-Editor → CF, Dabs Framework).
+    send('join:status', { step: 'check', message: 'Recherche des dépendances des mods…' });
+    required = await mods.withDependencies(extraMods);
+  }
 
   send('join:status', { step: 'check', message: 'Vérification des mods…' });
   const resolved = await mods.resolveServerMods(install, required);
@@ -144,6 +148,8 @@ function registerIpc() {
       favorites: store.get('favorites'),
       history: store.get('history'),
       manualServers: store.get('manualServers'),
+      modPresets: store.get('modPresets'),
+      offlineLaunch: store.get('offlineLaunch'),
       version: app.getVersion(),
     };
   });
@@ -203,6 +209,13 @@ function registerIpc() {
     // Un mod encore abonné mais retiré du Workshop ne peut plus être retéléchargé : suppression sans risque.
     return mods.removeFolders(install, ids.filter((id) => !notUnsubscribed.includes(id) || isRemovedFromWorkshop(id)));
   });
+  handle('mods:withDependencies', (list) => mods.withDependencies(list));
+  handle('presets:save', ({ name, ids }) => {
+    const presets = store.get('modPresets').filter((p) => p.name !== name);
+    return store.set('modPresets', [...presets, { name, ids }].sort((a, b) => a.name.localeCompare(b.name)));
+  });
+  handle('presets:delete', (name) => store.set('modPresets', store.get('modPresets').filter((p) => p.name !== name)));
+  handle('offline:remember', (opts) => store.set('offlineLaunch', opts));
   handle('mods:openFolder', (id) => shell.openPath(path.join(install.workshopPath, id)));
   handle('mods:openPage', (id) => shell.openExternal(`https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(id)}`));
 

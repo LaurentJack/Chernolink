@@ -41,6 +41,9 @@ const DEFAULTS = {
   favorites: [],
   history: [], // { id, ip, gamePort, queryPort, name, lastPlayed }
   manualServers: [], // { ip, queryPort }
+  modPresets: [], // { name, ids: [] } — sélections de mods pour lancer hors serveur
+  offlineLaunch: { ids: [], battlEye: false }, // dernière sélection utilisée
+
 };
 
 module.exports = { Store, DEFAULTS };
