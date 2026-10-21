@@ -59,41 +59,6 @@ Nom du personnage, dossier de DayZ (détecté automatiquement via Steam), param�
 
 > Pour ajouter un serveur à la main, indiquez son **port de requête Steam** (`steamQueryPort` dans `serverDZ.cfg`, 27016 par défaut), pas son port de jeu.
 
-## Compiler depuis les sources
-
-```bash
-git clone <url-du-dépôt>
-cd chernolink
-npm install
-npm start          # lance l'application en développement
-npm test           # tests unitaires
-npm run dist       # crée l'installateur et la version portable dans dist/
-```
-
-<details>
-<summary>La compilation échoue avec « Cannot create symbolic link »</summary>
-
-electron-builder extrait une archive d'outils qui contient deux liens symboliques destinés à macOS. Windows refuse de les créer sans privilège. Trois solutions :
-- activer le **mode développeur** de Windows ;
-- lancer `npm run dist` une fois dans un terminal **administrateur** ;
-- extraire l'archive soi-même en ignorant ces fichiers, puis relancer la compilation :
-
-```bash
-7za x %LOCALAPPDATA%\electron-builder\Cache\winCodeSign\<fichier>.7z -o%LOCALAPPDATA%\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0 -xr!*.dylib
-```
-</details>
-
-## Fonctionnement
-
-| Module | Rôle |
-| --- | --- |
-| [`src/core/steam.js`](src/core/steam.js) | Détecte Steam, ses bibliothèques et l'installation de DayZ (registre et `libraryfolders.vdf`). |
-| [`src/core/a2s.js`](src/core/a2s.js) | Requêtes UDP Steam `A2S_INFO` / `A2S_RULES`, décodage de la liste binaire des mods DayZ, découverte LAN par broadcast. |
-| [`src/core/servers.js`](src/core/servers.js) | Liste maître des serveurs, rafraîchissement et ping. |
-| [`src/core/mods.js`](src/core/mods.js) | Mods installés, API publique du Workshop, jonctions `DayZ\!dzl\@<id>` et construction du paramètre `-mod=`. |
-| [`src/core/workshop-worker.js`](src/core/workshop-worker.js) | Processus isolé qui pilote le client Steam via [steamworks.js](https://github.com/ceifa/steamworks.js) (abonnement, téléchargement). |
-| [`src/core/launcher.js`](src/core/launcher.js) | Lance le jeu via `DayZ_BE.exe` (BattlEye) ou `DayZ_x64.exe`. |
-| [`src/renderer/`](src/renderer) | Interface HTML/CSS/JS sans framework, avec une liste virtualisée pour les milliers de serveurs. |
 
 Les paramètres, favoris et l'historique sont enregistrés dans `%APPDATA%\dayz-launcher\launcher.json`.
 
