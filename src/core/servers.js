@@ -6,17 +6,6 @@ const a2s = require('./a2s');
 const MASTER_URL = 'https://dayzsalauncher.com/api/v1/launcher/servers/dayz';
 const QUERY_URL = (ip, port) => `https://dayzsalauncher.com/api/v1/query/${ip}/${port}`;
 
-// Le jeu n'envoie plus « no3rd » de façon fiable (même les officiels 1PP ne l'envoient pas) :
-// on se rabat sur le nom du serveur, sauf s'il mentionne aussi la 3ème personne.
-const FIRST_PERSON_NAME = /\b(1\s*pp|fpp|1st[\s-]*person|first[\s-]*person|1(è|e)re\s*personne)\b/i;
-const THIRD_PERSON_NAME = /\b(3\s*pp|tpp|3rd[\s-]*person|third[\s-]*person|3(è|e)me\s*personne)\b/i;
-
-function isFirstPersonOnly(s) {
-  if (s.firstPersonOnly) return true;
-  const name = s.name || '';
-  return FIRST_PERSON_NAME.test(name) && !THIRD_PERSON_NAME.test(name);
-}
-
 function normalize(s, source) {
   const ip = s.endpoint ? s.endpoint.ip : s.ip;
   const queryPort = s.endpoint ? s.endpoint.port : s.queryPort;
@@ -33,7 +22,7 @@ function normalize(s, source) {
     queue: s.queue || 0,
     password: !!s.password,
     version: s.version || '',
-    firstPersonOnly: isFirstPersonOnly(s),
+    firstPersonOnly: !!s.firstPersonOnly,
     battlEye: s.battlEye !== false,
     time: s.time || '',
     official: s.shard === 'public',
@@ -48,7 +37,8 @@ async function fetchMasterList() {
   if (!res.ok) throw new Error(`Liste des serveurs indisponible (HTTP ${res.status})`);
   const data = await res.json();
   if (data.status !== 0 || !Array.isArray(data.result)) throw new Error('Réponse de la liste maître invalide');
-  return data.result.map((s) => normalize(s, 'master'));
+  // DZSA recopie le mot-clé « no3rd » tel quel, or il est présent quand la 3PP est AUTORISÉE.
+  return data.result.map((s) => normalize({ ...s, firstPersonOnly: !s.firstPersonOnly }, 'master'));
 }
 
 /** Rafraîchit un serveur : ping + infos via A2S, mods via A2S_RULES (repli sur l'API DZSA). */

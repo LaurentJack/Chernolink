@@ -56,7 +56,9 @@ function parseInfo(buf) {
   // DayZ encode des informations utiles dans les mots-clés.
   const kw = (info.keywords || '').split(',');
   info.battlEye = kw.includes('battleye');
-  info.firstPersonOnly = kw.includes('no3rd');
+  // Contre-intuitif mais vérifié sur des serveurs réels : « no3rd » est annoncé quand la
+  // 3ème personne est autorisée, et absent sur les serveurs 1PP (officiels compris).
+  info.firstPersonOnly = !kw.includes('no3rd');
   // Les serveurs officiels utilisent la hive publique ; les communautaires annoncent « privHive ».
   info.shard = kw.includes('privHive') ? 'private' : 'public';
   const time = kw.find((k) => /^\d{1,2}:\d{2}$/.test(k));
