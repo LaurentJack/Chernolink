@@ -118,6 +118,10 @@ Vérifiez que Steam est ouvert. Pour un serveur LAN sans BattlEye, décochez Bat
 - [DZSA Launcher](https://dayzsalauncher.com) pour son API publique de liste de serveurs.
 - [steamworks.js](https://github.com/ceifa/steamworks.js) pour l'accès à l'API Steamworks depuis Node.js.
 
+## Licence
+
+Distribué sous licence [MIT](LICENSE).
+
 ## Avertissement
 
 Chernolink est un projet communautaire indépendant. Il n'est ni affilié à Bohemia Interactive ni approuvé par eux, pas plus que par Valve. *DayZ* est une marque de Bohemia Interactive a.s. ; *Steam* est une marque de Valve Corporation.

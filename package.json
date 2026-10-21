@@ -17,7 +17,7 @@
     "electron": "38.2.0",
     "electron-builder": "^26.0.12"
   },
-  "author": "Jack",
+  "author": "LaurentJack",
   "build": {
     "appId": "com.chernolink.launcher",
     "productName": "Chernolink",
@@ -53,5 +53,7 @@
       "artifactName": "Chernolink-${version}-portable.exe"
     },
     "artifactName": "Chernolink-${version}-setup.${ext}"
-  }
+  },
+  "license": "MIT",
+  "repository": "github:LaurentJack/Chernolink"
 }
