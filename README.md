@@ -1,6 +1,5 @@
-<p align="center">
-  <img src="assets/icon.png" width="128" alt="Logo Chernolink">
-</p>
+<img width="512" height="512" alt="icon" src="https://github.com/user-attachments/assets/d75c1efd-5d8a-441c-86db-9137d3896003" />
+
 
 <h1 align="center">Chernolink</h1>
 
