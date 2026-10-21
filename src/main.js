@@ -32,6 +32,7 @@ function getWorker() {
     const job = jobs.get(msg.jobId);
     if (!job) return;
     if (msg.type === 'states') job.result = msg.states;
+    if (msg.type === 'result') job.result = msg.data;
     if (msg.type === 'done') { jobs.delete(msg.jobId); job.resolve(job.result); }
     if (msg.type === 'error') { jobs.delete(msg.jobId); job.reject(new Error(msg.message)); }
   });
@@ -72,6 +73,9 @@ async function detect() {
   }
   return install;
 }
+
+const removedFromWorkshop = new Set();
+const isRemovedFromWorkshop = (id) => removedFromWorkshop.has(id);
 
 function serverSnapshot(s) {
   return { id: s.id, ip: s.ip, gamePort: s.gamePort, queryPort: s.queryPort, name: s.name, map: s.map, official: s.official, source: s.source };
@@ -167,15 +171,31 @@ function registerIpc() {
   });
   handle('history:clear', () => store.set('history', []));
 
-  handle('mods:list', () => mods.checkUpdates(install));
+  handle('mods:list', async () => {
+    const list = await mods.checkUpdates(install);
+    for (const m of list) if (m.removed) removedFromWorkshop.add(m.id);
+    return list;
+  });
   handle('mods:resolve', (serverMods) => mods.resolveServerMods(install, serverMods));
   handle('mods:download', (ids) => runWorkshop('download', ids));
   handle('mods:remove', async (ids) => {
     const tracked = new Set(mods.listInstalled(install).filter((m) => m.tracked).map((m) => m.id));
     const subscribed = ids.filter((id) => tracked.has(id));
-    if (subscribed.length) await runWorkshop('unsubscribe', subscribed);
-    mods.removeOrphans(install, ids.filter((id) => !tracked.has(id)));
-    mods.cleanupLinks(install);
+    let notUnsubscribed = [];
+    if (subscribed.length) {
+      try {
+        // Échecs tolérés : un mod retiré du Workshop ne peut parfois plus être désabonné.
+        notUnsubscribed = (await runWorkshop('unsubscribe', subscribed)).failed;
+      } catch (e) {
+        // Steam injoignable : ne pas supprimer les mods abonnés, Steam les retéléchargerait.
+        const r = mods.removeFolders(install, ids.filter((id) => !tracked.has(id)));
+        r.failed.push(...subscribed.map((id) => ({ id, error: e.message })));
+        return r;
+      }
+    }
+    // Steam ne nettoie pas toujours les dossiers désabonnés : on les supprime nous-mêmes.
+    // Un mod encore abonné mais retiré du Workshop ne peut plus être retéléchargé : suppression sans risque.
+    return mods.removeFolders(install, ids.filter((id) => !notUnsubscribed.includes(id) || isRemovedFromWorkshop(id)));
   });
   handle('mods:openFolder', (id) => shell.openPath(path.join(install.workshopPath, id)));
   handle('mods:openPage', (id) => shell.openExternal(`https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(id)}`));

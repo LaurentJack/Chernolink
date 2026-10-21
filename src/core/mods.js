@@ -153,14 +153,21 @@ function cleanupLinks(install) {
   return removed;
 }
 
-/** Supprime du disque des dossiers orphelins (non suivis par Steam). */
-function removeOrphans(install, ids) {
-  const tracked = new Set(listInstalled(install).filter((m) => m.tracked).map((m) => m.id));
+/** Supprime du disque les dossiers de mods ; renvoie les ID supprimés et les échecs. */
+function removeFolders(install, ids) {
+  const removed = [];
+  const failed = [];
   for (const id of ids) {
-    if (!/^d+$/.test(id) || tracked.has(id)) continue;
-    fs.rmSync(path.join(install.workshopPath, id), { recursive: true, force: true });
+    if (!/^\d+$/.test(id)) { failed.push({ id, error: 'ID invalide' }); continue; }
+    try {
+      fs.rmSync(path.join(install.workshopPath, id), { recursive: true, force: true, maxRetries: 3 });
+      removed.push(id);
+    } catch (e) {
+      failed.push({ id, error: e.code === 'EPERM' || e.code === 'EBUSY' ? 'fichier utilisé (DayZ ou Steam ouvert ?)' : e.message });
+    }
   }
   cleanupLinks(install);
+  return { removed, failed };
 }
 
-module.exports = { removeOrphans, listInstalled, fetchDetails, checkUpdates, resolveServerMods, buildModParam, cleanupLinks, LINK_DIR };
+module.exports = { removeFolders, listInstalled, fetchDetails, checkUpdates, resolveServerMods, buildModParam, cleanupLinks, LINK_DIR };

@@ -73,7 +73,11 @@ async function handle(job) {
         post({ type: 'item-done', jobId: job.jobId, id: job.ids[n] });
       }
     } else if (job.cmd === 'unsubscribe') {
-      for (const id of job.ids) await client.workshop.unsubscribe(BigInt(id));
+      const failed = [];
+      for (const id of job.ids) {
+        try { await client.workshop.unsubscribe(BigInt(id)); } catch { failed.push(id); }
+      }
+      post({ type: 'result', jobId: job.jobId, data: { failed } });
     } else if (job.cmd === 'states') {
       const states = {};
       for (const id of job.ids) states[id] = client.workshop.state(BigInt(id));

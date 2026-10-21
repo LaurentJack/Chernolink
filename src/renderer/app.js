@@ -622,16 +622,18 @@ $('#btn-mod-add').addEventListener('click', () => {
 $('#btn-mods-remove').addEventListener('click', async () => {
   const ids = [...state.modSelection];
   if (!ids.length) return;
-  if (!window.confirm(`Désinstaller ${ids.length} mod(s) ? Les mods abonnés seront désabonnés (Steam les supprime), les dossiers orphelins seront supprimés du disque.`)) return;
+  if (!window.confirm(`Désinstaller ${ids.length} mod(s) ? Les mods abonnés seront désabonnés (Steam les supprime), puis leurs dossiers seront supprimés du disque.`)) return;
   try {
-    await api.mods.remove(ids);
-    toast('Mods désinstallés. Steam supprimera les fichiers des mods désabonnés sous peu.', 'ok');
-    state.mods = state.mods.filter((m) => !state.modSelection.has(m.id));
-    state.modSelection.clear();
-    renderMods();
+    const r = await api.mods.remove(ids);
+    if (r.removed.length) toast(`${r.removed.length} mod(s) supprimé(s) du disque`, 'ok');
+    if (r.failed.length) {
+      const names = r.failed.slice(0, 5).map((f) => `${state.mods.find((m) => m.id === f.id)?.name || f.id} : ${f.error}`);
+      toast(`${r.failed.length} mod(s) non supprimé(s) — ${names.join(' ; ')}`, 'error');
+    }
   } catch (e) {
     toast(e.message, 'error');
   }
+  await loadMods();
 });
 
 // ---------------------------------------------------------------------------

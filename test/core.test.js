@@ -74,3 +74,26 @@ test('normalize classe les serveurs officiels', () => {
   assert.strictEqual(s.id, '1.2.3.4:2302');
   assert.strictEqual(s.official, true);
 });
+
+test('removeFolders supprime les dossiers de mods, même en lecture seule', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const { removeFolders } = require('../src/core/mods');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dzl-'));
+  const workshopPath = path.join(root, 'ws');
+  const dayzPath = path.join(root, 'DayZ');
+  fs.mkdirSync(path.join(workshopPath, '123', 'addons'), { recursive: true });
+  const ro = path.join(workshopPath, '123', 'addons', 'a.pbo');
+  fs.writeFileSync(ro, 'x');
+  fs.chmodSync(ro, 0o444);
+  fs.mkdirSync(path.join(dayzPath, '!dzl'), { recursive: true });
+  fs.symlinkSync(path.join(workshopPath, '123'), path.join(dayzPath, '!dzl', '@123'), 'junction');
+
+  const r = removeFolders({ workshopPath, dayzPath }, ['123', '../x']);
+  assert.deepStrictEqual(r.removed, ['123']);
+  assert.strictEqual(r.failed.length, 1);
+  assert.ok(!fs.existsSync(path.join(workshopPath, '123')));
+  assert.deepStrictEqual(fs.readdirSync(path.join(dayzPath, '!dzl')), []);
+  fs.rmSync(root, { recursive: true, force: true });
+});
