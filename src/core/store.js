@@ -31,6 +31,7 @@ class Store {
 
 const DEFAULTS = {
   settings: {
+    language: 'auto', // 'auto' = langue du système, sinon fr / en / de / es / ru
     profileName: '',
     battlEye: true,
     extraArgs: '',

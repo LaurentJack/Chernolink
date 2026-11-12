@@ -219,3 +219,4 @@ legend { color: var(--accent-2); padding: 0 6px; font-weight: 600; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #2c3136; border-radius: 5px; border: 2px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
+.mods-summary b.warn { color: var(--warn); }

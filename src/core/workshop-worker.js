@@ -7,6 +7,8 @@
  * affiche pas indéfiniment « en jeu sur DayZ ».
  */
 const port = process.parentPort;
+const i18n = require('../i18n');
+const { t } = i18n;
 const IDLE_EXIT_MS = 30_000;
 
 const STATE = { SUBSCRIBED: 1, INSTALLED: 4, NEEDS_UPDATE: 8, DOWNLOADING: 16, PENDING: 32 };
@@ -53,17 +55,18 @@ async function downloadOne(id, index, total) {
 
     if (info && info.current !== lastBytes) { lastBytes = info.current; lastProgress = Date.now(); }
     // Steam peut mettre un moment à démarrer ; au-delà de 3 min sans progrès on abandonne.
-    if (Date.now() - lastProgress > 180_000) throw new Error(`Téléchargement bloqué pour le mod ${id}`);
+    if (Date.now() - lastProgress > 180_000) throw new Error(t('err.downloadStuck', { id }));
     if (!(st & (STATE.DOWNLOADING | STATE.PENDING)) && !done) ugc.download(big, true);
     await sleep(500);
   }
 }
 
 async function handle(job) {
+  if (job.lang) i18n.setLanguage(job.lang);
   try {
     ensureClient();
   } catch (e) {
-    post({ type: 'error', jobId: job.jobId, message: `Impossible de contacter Steam : lancez Steam et connectez-vous avec le compte qui possède DayZ. (${e.message})` });
+    post({ type: 'error', jobId: job.jobId, message: t('err.steamUnreachable', { error: e.message }) });
     return;
   }
   try {

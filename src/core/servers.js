@@ -1,6 +1,7 @@
 'use strict';
 
 const a2s = require('./a2s');
+const { t } = require('../i18n');
 
 // Liste maître publique (communautaires + officiels) maintenue par DZSA Launcher.
 const MASTER_URL = 'https://dayzsalauncher.com/api/v1/launcher/servers/dayz';
@@ -34,11 +35,12 @@ function normalize(s, source) {
 
 async function fetchMasterList() {
   const res = await fetch(MASTER_URL, { headers: { 'User-Agent': 'DayZ-Launcher/1.0' } });
-  if (!res.ok) throw new Error(`Liste des serveurs indisponible (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(t('err.serverList', { status: res.status }));
   const data = await res.json();
-  if (data.status !== 0 || !Array.isArray(data.result)) throw new Error('Réponse de la liste maître invalide');
-  // DZSA recopie le mot-clé « no3rd » tel quel, or il est présent quand la 3PP est AUTORISÉE.
-  return data.result.map((s) => normalize({ ...s, firstPersonOnly: !s.firstPersonOnly }, 'master'));
+  if (data.status !== 0 || !Array.isArray(data.result)) throw new Error(t('err.masterInvalid'));
+  // firstPersonOnly de DZSA est exact (vérifié en novembre 2026 ; il était inversé en octobre).
+  // Seul le mot-clé brut « no3rd » des requêtes A2S est inversé : voir a2s.js.
+  return data.result.map((s) => normalize(s, 'master'));
 }
 
 /** Rafraîchit un serveur : ping + infos via A2S, mods via A2S_RULES (repli sur l'API DZSA). */

@@ -42,7 +42,7 @@
 </p>
 
 ### Paramètres
-Nom du personnage, dossier de DayZ (détecté automatiquement via Steam), paramètres de lancement supplémentaires (`-cpuCount`, `-maxMem`…), BattlEye activé ou non, mise à jour automatique des mods.
+**Langue de l'interface** : français, English, Deutsch, Español, Русский (par défaut, celle de Windows). Nom du personnage, dossier de DayZ (détecté automatiquement via Steam), paramètres de lancement supplémentaires (`-cpuCount`, `-maxMem`…), BattlEye activé ou non, mise à jour automatique des mods.
 
 ## Installation
 

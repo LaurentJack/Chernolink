@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!--
+    Traduction : data-i18n remplace le texte, data-i18n-placeholder / data-i18n-title les attributs.
+    Les textes sont dans src/locales/<langue>.js.
+  -->
   <aside class="sidebar">
     <div class="brand">
       <img class="brand-mark" src="../../assets/icon.svg" alt="">
@@ -18,20 +22,20 @@
     <nav>
       <button class="nav-item active" data-view="servers">
         <svg viewBox="0 0 24 24"><path d="M4 5h16v5H4zM4 14h16v5H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="7.5" cy="7.5" r="1" fill="currentColor"/><circle cx="7.5" cy="16.5" r="1" fill="currentColor"/></svg>
-        Serveurs
+        <span data-i18n="nav.servers"></span>
       </button>
       <button class="nav-item" data-view="mods">
         <svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z M12 12l8-4.5 M12 12v9 M12 12L4 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        Mods
+        <span data-i18n="nav.mods"></span>
         <span class="badge hidden" id="mods-badge"></span>
       </button>
       <button class="nav-item" data-view="settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Paramètres
+        <span data-i18n="nav.settings"></span>
       </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="btn btn-ghost w-full" id="btn-play-menu" title="Lancer DayZ sans serveur, avec ou sans mods">Lancer DayZ…</button>
+      <button class="btn btn-ghost w-full" id="btn-play-menu" data-i18n="sidebar.play" data-i18n-title="sidebar.playTitle"></button>
       <div class="install-state" id="install-state"></div>
     </div>
   </aside>
@@ -41,45 +45,45 @@
     <section class="view" id="view-servers">
       <header class="view-header">
         <div class="tabs" id="server-tabs">
-          <button class="tab active" data-tab="official">Officiels <span class="count" data-count="official"></span></button>
-          <button class="tab" data-tab="community">Communautaires <span class="count" data-count="community"></span></button>
-          <button class="tab" data-tab="lan">LAN / Direct <span class="count" data-count="lan"></span></button>
-          <button class="tab" data-tab="favorites">Favoris <span class="count" data-count="favorites"></span></button>
-          <button class="tab" data-tab="history">Historique <span class="count" data-count="history"></span></button>
+          <button class="tab active" data-tab="official"><span data-i18n="tabs.official"></span> <span class="count" data-count="official"></span></button>
+          <button class="tab" data-tab="community"><span data-i18n="tabs.community"></span> <span class="count" data-count="community"></span></button>
+          <button class="tab" data-tab="lan"><span data-i18n="tabs.lan"></span> <span class="count" data-count="lan"></span></button>
+          <button class="tab" data-tab="favorites"><span data-i18n="tabs.favorites"></span> <span class="count" data-count="favorites"></span></button>
+          <button class="tab" data-tab="history"><span data-i18n="tabs.history"></span> <span class="count" data-count="history"></span></button>
         </div>
         <div class="header-actions">
-          <button class="btn btn-ghost" id="btn-refresh" title="Recharger la liste">
+          <button class="btn btn-ghost" id="btn-refresh" data-i18n-title="servers.refreshTitle">
             <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Actualiser
+            <span data-i18n="servers.refresh"></span>
           </button>
         </div>
       </header>
 
       <div class="filters">
-        <input type="search" id="f-search" placeholder="Rechercher un serveur, une IP, un mod…">
-        <select id="f-map"><option value="">Toutes les cartes</option></select>
-        <label class="chk"><input type="checkbox" id="f-hide-empty"> Masquer vides</label>
-        <label class="chk"><input type="checkbox" id="f-hide-full"> Masquer pleins</label>
-        <label class="chk"><input type="checkbox" id="f-no-pass"> Sans mot de passe</label>
+        <input type="search" id="f-search" data-i18n-placeholder="filters.search">
+        <select id="f-map"><option value="" data-i18n="filters.allMaps"></option></select>
+        <label class="chk"><input type="checkbox" id="f-hide-empty"> <span data-i18n="filters.hideEmpty"></span></label>
+        <label class="chk"><input type="checkbox" id="f-hide-full"> <span data-i18n="filters.hideFull"></span></label>
+        <label class="chk"><input type="checkbox" id="f-no-pass"> <span data-i18n="filters.noPassword"></span></label>
         <select id="f-persp">
-          <option value="">1PP + 3PP</option>
-          <option value="1pp">1ère personne</option>
-          <option value="3pp">3ème personne</option>
+          <option value="" data-i18n="filters.perspAll"></option>
+          <option value="1pp" data-i18n="filters.persp1"></option>
+          <option value="3pp" data-i18n="filters.persp3"></option>
         </select>
         <select id="f-mods">
-          <option value="">Avec ou sans mods</option>
-          <option value="vanilla">Vanilla</option>
-          <option value="modded">Moddés</option>
+          <option value="" data-i18n="filters.modsAll"></option>
+          <option value="vanilla" data-i18n="filters.vanilla"></option>
+          <option value="modded" data-i18n="filters.modded"></option>
         </select>
-        <label class="chk"><input type="checkbox" id="f-same-version" checked> Ma version</label>
+        <label class="chk"><input type="checkbox" id="f-same-version" checked> <span data-i18n="filters.sameVersion"></span></label>
       </div>
 
       <div class="lan-bar hidden" id="lan-bar">
-        <button class="btn" id="btn-lan-scan">Scanner le réseau local</button>
+        <button class="btn" id="btn-lan-scan" data-i18n="lan.scan"></button>
         <span class="sep"></span>
-        <input id="manual-ip" placeholder="Adresse IP / nom d'hôte">
-        <input id="manual-port" placeholder="Port query (27016)" class="port">
-        <button class="btn btn-ghost" id="btn-add-manual">Ajouter</button>
+        <input id="manual-ip" data-i18n-placeholder="lan.ipPlaceholder">
+        <input id="manual-port" data-i18n-placeholder="lan.portPlaceholder" class="port">
+        <button class="btn btn-ghost" id="btn-add-manual" data-i18n="lan.add"></button>
         <span class="hint" id="lan-hint"></span>
       </div>
 
@@ -87,12 +91,12 @@
         <div class="table-wrap">
           <div class="table-head server-row">
             <span></span>
-            <span data-sort="name">Nom</span>
-            <span data-sort="map">Carte</span>
-            <span data-sort="players" class="num">Joueurs</span>
-            <span data-sort="ping" class="num">Ping</span>
-            <span data-sort="mods" class="num">Mods</span>
-            <span data-sort="time" class="num">Heure</span>
+            <span data-sort="name" data-i18n="cols.name"></span>
+            <span data-sort="map" data-i18n="cols.map"></span>
+            <span data-sort="players" class="num" data-i18n="cols.players"></span>
+            <span data-sort="ping" class="num" data-i18n="cols.ping"></span>
+            <span data-sort="mods" class="num" data-i18n="cols.mods"></span>
+            <span data-sort="time" class="num" data-i18n="cols.time"></span>
           </div>
           <div class="table-body" id="server-list">
             <div class="spacer" id="server-spacer"></div>
@@ -102,7 +106,7 @@
         </div>
 
         <aside class="details" id="details">
-          <div class="details-empty">Sélectionnez un serveur pour voir ses détails et ses mods.</div>
+          <div class="details-empty" data-i18n="details.empty"></div>
         </aside>
       </div>
     </section>
@@ -110,30 +114,30 @@
     <!-- ======================= MODS ======================= -->
     <section class="view hidden" id="view-mods">
       <header class="view-header">
-        <h1>Mods Workshop</h1>
+        <h1 data-i18n="mods.title"></h1>
         <div class="header-actions">
-          <button class="btn btn-ghost" id="btn-mods-check">Vérifier les mises à jour</button>
-          <button class="btn" id="btn-mods-update">Tout mettre à jour</button>
+          <button class="btn btn-ghost" id="btn-mods-check" data-i18n="mods.checkUpdates"></button>
+          <button class="btn" id="btn-mods-update" data-i18n="mods.updateAll"></button>
         </div>
       </header>
       <div class="filters">
-        <input type="search" id="m-search" placeholder="Filtrer les mods…">
-        <label class="chk"><input type="checkbox" id="m-outdated"> Seulement les mises à jour</label>
+        <input type="search" id="m-search" data-i18n-placeholder="mods.filter">
+        <label class="chk"><input type="checkbox" id="m-outdated"> <span data-i18n="mods.onlyOutdated"></span></label>
         <span class="grow"></span>
-        <input id="m-add-id" placeholder="ID ou lien Workshop" class="add-id">
-        <button class="btn btn-ghost" id="btn-mod-add">Installer</button>
-        <button class="btn btn-ghost" id="btn-mods-play" disabled title="Lancer DayZ hors serveur avec les mods cochés">Jouer avec la sélection</button>
-        <button class="btn btn-danger" id="btn-mods-remove" disabled>Désinstaller la sélection</button>
+        <input id="m-add-id" data-i18n-placeholder="mods.addPlaceholder" class="add-id">
+        <button class="btn btn-ghost" id="btn-mod-add" data-i18n="mods.install"></button>
+        <button class="btn btn-ghost" id="btn-mods-play" disabled data-i18n="mods.playSelection" data-i18n-title="mods.playSelectionTitle"></button>
+        <button class="btn btn-danger" id="btn-mods-remove" disabled data-i18n="mods.removeSelection"></button>
       </div>
       <div class="mods-summary" id="mods-summary"></div>
       <div class="table-wrap">
         <div class="table-head mod-row">
           <span><input type="checkbox" id="m-all"></span>
-          <span>Nom</span>
-          <span>ID Workshop</span>
-          <span class="num">Taille</span>
-          <span>Mis à jour</span>
-          <span>État</span>
+          <span data-i18n="cols.name"></span>
+          <span data-i18n="mods.colId"></span>
+          <span class="num" data-i18n="mods.colSize"></span>
+          <span data-i18n="mods.colUpdated"></span>
+          <span data-i18n="mods.colState"></span>
           <span></span>
         </div>
         <div class="table-body plain" id="mod-list"></div>
@@ -142,33 +146,36 @@
 
     <!-- ======================= PARAMÈTRES ======================= -->
     <section class="view hidden" id="view-settings">
-      <header class="view-header"><h1>Paramètres</h1></header>
+      <header class="view-header"><h1 data-i18n="settings.title"></h1></header>
       <form class="settings" id="settings-form">
         <fieldset>
-          <legend>Jeu</legend>
-          <label>Nom du personnage / profil
-            <input name="profileName" placeholder="Survivant" maxlength="64">
+          <legend data-i18n="settings.game"></legend>
+          <label><span data-i18n="settings.language"></span>
+            <select name="language" id="language-select"></select>
           </label>
-          <label>Dossier de DayZ
+          <label><span data-i18n="settings.profile"></span>
+            <input name="profileName" data-i18n-placeholder="settings.profilePlaceholder" maxlength="64">
+          </label>
+          <label><span data-i18n="settings.dayzPath"></span>
             <div class="row">
-              <input name="dayzPath" placeholder="Détection automatique via Steam">
-              <button type="button" class="btn btn-ghost" id="btn-pick-path">Parcourir…</button>
+              <input name="dayzPath" data-i18n-placeholder="settings.dayzPathPlaceholder">
+              <button type="button" class="btn btn-ghost" id="btn-pick-path" data-i18n="settings.browse"></button>
             </div>
           </label>
-          <label>Paramètres de lancement supplémentaires
+          <label><span data-i18n="settings.extraArgs"></span>
             <input name="extraArgs" placeholder="-cpuCount=8 -maxMem=16384 -noPause">
           </label>
-          <label class="chk"><input type="checkbox" name="battlEye"> Lancer avec BattlEye (requis pour les serveurs officiels et la plupart des communautaires)</label>
+          <label class="chk"><input type="checkbox" name="battlEye"> <span data-i18n="settings.battlEye"></span></label>
         </fieldset>
         <fieldset>
-          <legend>Mods &amp; serveurs</legend>
-          <label class="chk"><input type="checkbox" name="autoUpdateMods"> Mettre à jour automatiquement les mods avant de rejoindre un serveur</label>
-          <label class="chk"><input type="checkbox" name="pingOnLoad"> Mesurer le ping des serveurs affichés</label>
+          <legend data-i18n="settings.modsServers"></legend>
+          <label class="chk"><input type="checkbox" name="autoUpdateMods"> <span data-i18n="settings.autoUpdate"></span></label>
+          <label class="chk"><input type="checkbox" name="pingOnLoad"> <span data-i18n="settings.ping"></span></label>
         </fieldset>
         <div class="settings-actions">
-          <button class="btn" type="submit">Enregistrer</button>
-          <button class="btn btn-ghost" type="button" id="btn-open-dayz">Ouvrir le dossier de DayZ</button>
-          <button class="btn btn-ghost" type="button" id="btn-clear-history">Vider l'historique</button>
+          <button class="btn" type="submit" data-i18n="settings.save"></button>
+          <button class="btn btn-ghost" type="button" id="btn-open-dayz" data-i18n="settings.openDayz"></button>
+          <button class="btn btn-ghost" type="button" id="btn-clear-history" data-i18n="settings.clearHistory"></button>
         </div>
         <p class="about" id="about"></p>
       </form>
@@ -178,21 +185,21 @@
   <!-- Lancement hors serveur avec des mods -->
   <div class="overlay hidden" id="offline">
     <div class="modal modal-wide">
-      <h2>Lancer DayZ avec des mods</h2>
-      <p>Pour l'éditeur, le mode hors-ligne ou tester des mods sans rejoindre de serveur. Les dépendances requises (CF, Dabs Framework…) sont ajoutées et téléchargées automatiquement.</p>
+      <h2 data-i18n="offline.title"></h2>
+      <p data-i18n="offline.intro"></p>
       <div class="off-presets">
-        <select id="off-preset"><option value="">Préréglages…</option></select>
-        <button class="btn btn-ghost" id="off-preset-save">Enregistrer la sélection</button>
-        <button class="btn btn-danger" id="off-preset-delete" disabled>Supprimer</button>
+        <select id="off-preset"></select>
+        <button class="btn btn-ghost" id="off-preset-save" data-i18n="offline.saveSelection"></button>
+        <button class="btn btn-danger" id="off-preset-delete" disabled data-i18n="offline.delete"></button>
       </div>
-      <input type="search" id="off-search" placeholder="Rechercher un mod installé…">
+      <input type="search" id="off-search" data-i18n-placeholder="offline.search">
       <div class="off-list" id="off-list"></div>
       <div class="off-summary" id="off-summary"></div>
       <div class="off-foot">
-        <label class="chk"><input type="checkbox" id="off-be"> Lancer avec BattlEye</label>
+        <label class="chk"><input type="checkbox" id="off-be"> <span data-i18n="offline.battlEye"></span></label>
         <span class="grow"></span>
-        <button class="btn btn-ghost" id="off-cancel">Annuler</button>
-        <button class="btn" id="off-launch">Lancer DayZ</button>
+        <button class="btn btn-ghost" id="off-cancel" data-i18n="common.cancel"></button>
+        <button class="btn" id="off-launch" data-i18n="offline.launch"></button>
       </div>
     </div>
   </div>
@@ -200,15 +207,21 @@
   <!-- Fenêtre de progression -->
   <div class="overlay hidden" id="overlay">
     <div class="modal">
-      <h2 id="ov-title">Connexion</h2>
+      <h2 id="ov-title" data-i18n="overlay.connection"></h2>
       <p id="ov-message"></p>
       <div class="progress"><div class="bar" id="ov-bar"></div></div>
       <p class="ov-detail" id="ov-detail"></p>
-      <div class="modal-actions"><button class="btn btn-ghost hidden" id="ov-close">Fermer</button></div>
+      <div class="modal-actions"><button class="btn btn-ghost hidden" id="ov-close" data-i18n="common.close"></button></div>
     </div>
   </div>
 
   <div class="toasts" id="toasts"></div>
+  <script src="../locales/translate.js"></script>
+  <script src="../locales/fr.js"></script>
+  <script src="../locales/en.js"></script>
+  <script src="../locales/de.js"></script>
+  <script src="../locales/es.js"></script>
+  <script src="../locales/ru.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

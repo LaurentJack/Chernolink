@@ -6,6 +6,29 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// ---------------------------------------------------------------------------
+// Traduction (dictionnaires chargés par les <script> de src/locales/)
+// ---------------------------------------------------------------------------
+const LOCALES = window.CHERNOLINK_LOCALES || {};
+let lang = 'fr';
+let t = window.chernolinkTranslate.createTranslator(LOCALES, lang);
+
+function setLanguage(code) {
+  lang = LOCALES[code] ? code : 'en';
+  t = window.chernolinkTranslate.createTranslator(LOCALES, lang);
+  document.documentElement.lang = lang;
+  applyStaticTranslations();
+}
+
+function applyStaticTranslations(root = document) {
+  $$('[data-i18n]', root).forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-placeholder]', root).forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  $$('[data-i18n-title]', root).forEach((el) => { el.title = t(el.dataset.i18nTitle); });
+}
+
+// Langue provisoire (celle du système) en attendant les paramètres du processus principal.
+setLanguage(window.chernolinkTranslate.resolveLanguage('auto', navigator.language));
+
 const MAP_NAMES = {
   chernarusplus: 'Chernarus', enoch: 'Livonia', sakhal: 'Sakhal', deerisle: 'Deer Isle', namalsk: 'Namalsk',
   takistanplus: 'Takistan', banov: 'Banov', esseker: 'Esseker', chiemsee: 'Chiemsee', rostow: 'Rostow',
@@ -15,12 +38,12 @@ const mapName = (m) => MAP_NAMES[m] || (m ? m.charAt(0).toUpperCase() + m.slice(
 
 const fmtSize = (b) => {
   if (!b) return '—';
-  const u = ['o', 'Ko', 'Mo', 'Go'];
+  const u = t('units.size').split(',');
   let i = 0;
   while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
   return `${b.toFixed(i > 1 ? 1 : 0)} ${u[i]}`;
 };
-const fmtDate = (sec) => (sec ? new Date(sec * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
+const fmtDate = (sec) => (sec ? new Date(sec * 1000).toLocaleDateString(lang, { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
 
 const state = {
   init: null,
@@ -177,13 +200,13 @@ function rowHtml(s, idx) {
   const queue = live.queue ?? s.queue;
   const full = max && players >= max;
   return `<div class="server-row${state.selected && state.selected.id === s.id ? ' selected' : ''}" data-idx="${idx}" style="top:${idx * 34}px">
-    <span><button class="star${fav ? ' on' : ''}" data-fav="${idx}" title="Favori">★</button></span>
+    <span><button class="star${fav ? ' on' : ''}" data-fav="${idx}" title="${esc(t('row.favorite'))}">★</button></span>
     <span class="name-cell">
-      ${s.official ? '<span class="tag official">OFFICIEL</span>' : ''}
+      ${s.official ? `<span class="tag official">${esc(t('row.official'))}</span>` : ''}
       <span class="n" title="${esc(s.name)}">${esc(s.name)}</span>
       ${s.firstPersonOnly ? '<span class="tag pp1">1PP</span>' : ''}
-      ${s.password ? '<span class="tag lock" title="Protégé par mot de passe">🔒</span>' : ''}
-      ${s.offline ? '<span class="tag">hors liste</span>' : ''}
+      ${s.password ? `<span class="tag lock" title="${esc(t('row.password'))}">🔒</span>` : ''}
+      ${s.offline ? `<span class="tag">${esc(t('row.notListed'))}</span>` : ''}
     </span>
     <span>${esc(mapName(s.map))}</span>
     <span class="num ${full ? 'players-full' : ''}">${players}/${max}${queue ? ` <small>+${queue}</small>` : ''}</span>
@@ -208,16 +231,17 @@ function renderServers(resetScroll) {
   const empty = $('#server-empty');
   empty.classList.toggle('hidden', state.filtered.length > 0);
   if (!state.filtered.length) {
-    empty.textContent = {
-      lan: 'Aucun serveur LAN détecté. Lancez un scan ou ajoutez un serveur par son IP.',
-      favorites: 'Aucun favori. Cliquez sur ★ pour en ajouter.',
-      history: 'Aucun serveur rejoint récemment.',
-    }[state.tab] || (state.master.length ? 'Aucun serveur ne correspond aux filtres.' : 'Chargement de la liste…');
+    const key = { lan: 'empty.lan', favorites: 'empty.favorites', history: 'empty.history' }[state.tab]
+      || (state.master.length ? 'empty.noMatch' : 'empty.loading');
+    empty.textContent = t(key);
   }
   const total = currentSource().length;
   const players = state.filtered.reduce((n, s) => n + (s.players || 0), 0);
-  $('#server-foot').textContent = `${state.filtered.length} serveur(s) affiché(s) sur ${total} — ${players} joueur(s)`
-    + (state.currentVersion ? ` — version actuelle : ${state.currentVersion}` : '');
+  $('#server-foot').textContent = [
+    t('foot.servers', { shown: state.filtered.length, total }),
+    t('foot.players', { n: players }),
+    state.currentVersion ? t('foot.version', { v: state.currentVersion }) : '',
+  ].filter(Boolean).join(' — ');
   schedulePing(start, end);
 }
 
@@ -279,7 +303,7 @@ function fillMapFilter() {
   const current = sel.value;
   const maps = [...new Set(state.master.map((s) => s.map).filter(Boolean))]
     .sort((a, b) => mapName(a).localeCompare(mapName(b)));
-  sel.innerHTML = '<option value="">Toutes les cartes</option>'
+  sel.innerHTML = `<option value="">${esc(t('filters.allMaps'))}</option>`
     + maps.map((m) => `<option value="${esc(m)}">${esc(mapName(m))}</option>`).join('');
   sel.value = current;
 }
@@ -331,12 +355,12 @@ async function scanLan() {
   state.lanScanned = true;
   const btn = $('#btn-lan-scan');
   btn.disabled = true;
-  $('#lan-hint').textContent = 'Recherche des serveurs sur le réseau local…';
+  $('#lan-hint').textContent = t('lan.searching');
   try {
     const [lan, manual] = await Promise.all([api.servers.lan(), api.servers.loadManual()]);
     state.lan = lan;
     state.manual = manual;
-    $('#lan-hint').textContent = `${lan.length} serveur(s) LAN trouvé(s), ${manual.length} ajouté(s) manuellement.`;
+    $('#lan-hint').textContent = t('lan.found', { lan: lan.length, manual: manual.length });
   } catch (e) {
     $('#lan-hint').textContent = '';
     toast(e.message, 'error');
@@ -353,21 +377,21 @@ $('#btn-add-manual').addEventListener('click', async () => {
   let port = $('#manual-port').value.trim();
   const m = ip.match(/^(.+):(\d+)$/);
   if (m) { ip = m[1]; port = port || m[2]; }
-  if (!ip) return toast('Indiquez l\'adresse du serveur', 'error');
+  if (!ip) return toast(t('lan.enterAddress'), 'error');
   port = Number(port || 27016);
-  $('#lan-hint').textContent = `Interrogation de ${ip}:${port}…`;
+  $('#lan-hint').textContent = t('lan.querying', { addr: `${ip}:${port}` });
   try {
     const s = await api.servers.addManual(ip, port);
     state.manual = mergeUnique([s, ...state.manual]);
     $('#manual-ip').value = '';
     $('#manual-port').value = '';
-    $('#lan-hint').textContent = `« ${s.name} » ajouté.`;
+    $('#lan-hint').textContent = t('lan.added', { name: s.name });
     updateCounts();
     applyFilters();
     selectServer(s);
   } catch (e) {
     $('#lan-hint').textContent = '';
-    toast(`Serveur injoignable : ${e.message}. Vérifiez l'IP et le port de requête (Steam query port).`, 'error');
+    toast(t('lan.unreachable', { error: e.message }), 'error');
   }
 });
 
@@ -414,13 +438,13 @@ function renderDetailsStats() {
   if (!s) return;
   const p = pingOf(s);
   const el = $('#d-ping');
-  if (el) { el.textContent = p == null ? '…' : p < 0 ? 'injoignable' : `${p} ms`; el.className = pingClass(p); }
+  if (el) { el.textContent = p == null ? '…' : p < 0 ? t('details.unreachable') : `${p} ms`; el.className = pingClass(p); }
 }
 
 function renderDetails() {
   const s = state.selected;
   const box = $('#details');
-  if (!s) { box.innerHTML = '<div class="details-empty">Sélectionnez un serveur pour voir ses détails et ses mods.</div>'; return; }
+  if (!s) { box.innerHTML = `<div class="details-empty">${esc(t('details.empty'))}</div>`; return; }
   const fav = state.favorites.some((f) => f.id === s.id);
   const mods = s.resolvedMods || s.mods.map((m) => ({ ...m, status: 'unknown' }));
   const missing = mods.filter((m) => m.status === 'missing');
@@ -431,34 +455,34 @@ function renderDetails() {
   box.innerHTML = `
     <div class="d-head">
       <h2>${esc(s.name)}</h2>
-      <div class="d-addr">${esc(s.ip)}:${esc(s.gamePort)} <span title="Port de requête">(query ${esc(s.queryPort)})</span></div>
+      <div class="d-addr">${esc(s.ip)}:${esc(s.gamePort)} <span title="${esc(t('details.queryPort'))}">(query ${esc(s.queryPort)})</span></div>
     </div>
     <div class="d-grid">
-      <div><small>Carte</small>${esc(mapName(s.map))}</div>
-      <div><small>Joueurs</small>${live.players ?? s.players}/${live.maxPlayers ?? s.maxPlayers}${(live.queue ?? s.queue) ? ` (+${live.queue ?? s.queue} en file)` : ''}</div>
-      <div><small>Ping</small><span id="d-ping"></span></div>
-      <div><small>Heure en jeu</small>${esc(s.time || '—')}</div>
-      <div><small>Perspective</small>${s.firstPersonOnly ? '1ère personne' : '1PP / 3PP'}</div>
-      <div><small>Version</small>${esc(s.version || '—')}</div>
-      <div><small>Type</small>${s.official ? 'Officiel' : s.source === 'lan' ? 'LAN' : 'Communautaire'}</div>
-      <div><small>BattlEye</small>${s.battlEye ? 'Oui' : 'Non'}</div>
+      <div><small>${t('details.map')}</small>${esc(mapName(s.map))}</div>
+      <div><small>${t('details.players')}</small>${live.players ?? s.players}/${live.maxPlayers ?? s.maxPlayers}${(live.queue ?? s.queue) ? ` ${t('details.queue', { n: live.queue ?? s.queue })}` : ''}</div>
+      <div><small>${t('details.ping')}</small><span id="d-ping"></span></div>
+      <div><small>${t('details.time')}</small>${esc(s.time || '—')}</div>
+      <div><small>${t('details.perspective')}</small>${s.firstPersonOnly ? t('filters.persp1') : t('details.bothPersp')}</div>
+      <div><small>${t('details.version')}</small>${esc(s.version || '—')}</div>
+      <div><small>${t('details.type')}</small>${t(s.official ? 'type.official' : s.source === 'lan' ? 'type.lan' : 'type.community')}</div>
+      <div><small>${t('details.battlEye')}</small>${t(s.battlEye ? 'common.yes' : 'common.no')}</div>
     </div>
-    <div class="d-mods-title"><span>Mods (${mods.length})</span><span>${s.resolvedMods ? `${missing.length} manquant(s), ${outdated.length} à mettre à jour` : mods.length ? 'vérification…' : ''}</span></div>
+    <div class="d-mods-title"><span>${esc(t('cols.mods'))} (${mods.length})</span><span>${s.resolvedMods ? t('details.modsStatus', { missing: missing.length, outdated: outdated.length }) : mods.length ? t('details.checking') : ''}</span></div>
     <div class="d-mods">
       ${mods.length ? mods.map((m) => `
         <div class="d-mod" title="${esc(m.name)} — ${esc(m.id)}">
           <span class="dot ${esc(m.status)}"></span>
           <span class="n">${esc(m.name)}</span>
-          <a data-open-mod="${esc(m.id)}">Workshop ↗</a>
-        </div>`).join('') : '<div class="d-note" style="padding:6px 8px">Serveur vanilla : aucun mod requis.</div>'}
+          <a data-open-mod="${esc(m.id)}">${esc(t('mods.workshopPage'))} ↗</a>
+        </div>`).join('') : `<div class="d-note" style="padding:6px 8px">${esc(t('details.vanilla'))}</div>`}
     </div>
     <div class="d-foot">
-      ${s.password ? '<input type="password" id="d-password" placeholder="Mot de passe du serveur">' : ''}
-      ${(missing.length || outdated.length) ? `<div class="d-note">${missing.length + outdated.length} mod(s) seront téléchargés via Steam${dlSize ? ` (${fmtSize(dlSize)})` : ''}.</div>` : ''}
+      ${s.password ? `<input type="password" id="d-password" placeholder="${esc(t('details.password'))}">` : ''}
+      ${(missing.length || outdated.length) ? `<div class="d-note">${esc(t('details.willDownload', { n: missing.length + outdated.length, size: dlSize ? ` (${fmtSize(dlSize)})` : '' }))}</div>` : ''}
       <div class="row">
-        <button class="btn btn-lg" id="d-join" style="flex:1">Rejoindre</button>
-        <button class="btn btn-ghost" id="d-fav" title="Favori">${fav ? '★ Retirer' : '☆ Favori'}</button>
-        ${s.source === 'manual' ? '<button class="btn btn-danger" id="d-remove" title="Retirer de la liste">✕</button>' : ''}
+        <button class="btn btn-lg" id="d-join" style="flex:1">${esc(t('details.join'))}</button>
+        <button class="btn btn-ghost" id="d-fav" title="${esc(t('row.favorite'))}">${esc(t(fav ? 'details.unfav' : 'details.fav'))}</button>
+        ${s.source === 'manual' ? `<button class="btn btn-danger" id="d-remove" title="${esc(t('details.removeManual'))}">✕</button>` : ''}
       </div>
     </div>`;
   renderDetailsStats();
@@ -485,7 +509,10 @@ api.on('workshop:progress', (p) => {
   const pct = p.totalBytes ? (p.current / p.totalBytes) * 100 : 0;
   const overall = ((p.index + pct / 100) / p.total) * 100;
   overlay.progress(overall);
-  overlay.detail(`Mod ${p.index + 1}/${p.total} (${p.id}) — ${p.totalBytes ? `${fmtSize(p.current)} / ${fmtSize(p.totalBytes)}` : 'en attente de Steam…'}`);
+  overlay.detail(t('progress.mod', {
+    i: p.index + 1, total: p.total, id: p.id,
+    progress: p.totalBytes ? `${fmtSize(p.current)} / ${fmtSize(p.totalBytes)}` : t('progress.waitingSteam'),
+  }));
 });
 api.on('join:status', (st) => {
   overlay.message(st.message);
@@ -498,8 +525,8 @@ async function joinSelected() {
   if (!s) return;
   const pwInput = $('#d-password');
   const password = pwInput ? pwInput.value : '';
-  if (s.password && !password) { pwInput.focus(); return toast('Ce serveur demande un mot de passe', 'error'); }
-  overlay.open(`Connexion à ${s.name}`, 'Préparation…');
+  if (s.password && !password) { pwInput.focus(); return toast(t('join.needPassword'), 'error'); }
+  overlay.open(t('join.connecting', { name: s.name }), t('join.preparing'));
   try {
     await api.game.join({ server: { ...s, resolvedMods: undefined }, password });
     const init = await api.init();
@@ -533,7 +560,7 @@ async function openOffline(preselect) {
 function closeOffline() { $('#offline').classList.add('hidden'); }
 
 function renderPresets() {
-  $('#off-preset').innerHTML = '<option value="">Préréglages…</option>'
+  $('#off-preset').innerHTML = `<option value="">${esc(t('offline.presets'))}</option>`
     + offline.presets.map((p) => `<option value="${esc(p.name)}">${esc(p.name)} (${p.ids.length})</option>`).join('');
   $('#off-preset-delete').disabled = true;
 }
@@ -549,9 +576,9 @@ function renderOffline() {
     <label class="off-item${chosen.has(m.id) ? ' on' : ''}">
       <input type="checkbox" data-off="${esc(m.id)}" ${chosen.has(m.id) ? 'checked' : ''}>
       <span class="n" title="${esc(m.name)}">${esc(m.name)}</span>
-      ${m.orphan ? '<span class="tag">non abonné</span>' : ''}
+      ${m.orphan ? `<span class="tag">${esc(t('offline.notSubscribed'))}</span>` : ''}
       <small>${esc(m.id)}</small>
-    </label>`).join('') : '<div class="table-empty" style="position:static">Aucun mod installé ne correspond.</div>';
+    </label>`).join('') : `<div class="table-empty" style="position:static">${esc(t('offline.noMatch'))}</div>`;
   updateOfflineSummary();
 }
 
@@ -562,11 +589,11 @@ function selectedMods() {
 let depsTimer;
 function updateOfflineSummary() {
   const box = $('#off-summary');
-  $('#off-launch').textContent = offline.selected.length ? `Lancer avec ${offline.selected.length} mod(s)` : 'Lancer DayZ sans mod';
+  $('#off-launch').textContent = offline.selected.length ? t('offline.launchWith', { n: offline.selected.length }) : t('offline.launchVanilla');
   clearTimeout(depsTimer);
   const token = ++offline.depsToken;
-  if (!offline.selected.length) { box.textContent = 'Aucun mod sélectionné : DayZ sera lancé en version vanilla.'; return; }
-  box.textContent = 'Recherche des dépendances…';
+  if (!offline.selected.length) { box.textContent = t('offline.noneSelected'); return; }
+  box.textContent = t('offline.searchingDeps');
   depsTimer = setTimeout(async () => {
     try {
       const order = await api.mods.withDependencies(selectedMods());
@@ -574,11 +601,11 @@ function updateOfflineSummary() {
       const installed = new Set(state.mods.map((m) => m.id));
       const deps = order.filter((m) => m.dependency);
       const missing = order.filter((m) => !installed.has(m.id));
-      box.innerHTML = `Ordre de chargement : ${order.map((m) => (m.dependency ? `<span class="dep">${esc(m.name)}</span>` : `<b>${esc(m.name)}</b>`)).join(' → ')}`
-        + (deps.length ? `<br><span class="dep">${deps.length} dépendance(s) ajoutée(s) automatiquement</span>` : '')
-        + (missing.length ? ` — ${missing.length} à télécharger` : '');
+      box.innerHTML = `${esc(t('offline.loadOrder'))} ${order.map((m) => (m.dependency ? `<span class="dep">${esc(m.name)}</span>` : `<b>${esc(m.name)}</b>`)).join(' → ')}`
+        + (deps.length ? `<br><span class="dep">${esc(t('offline.depsAdded', { n: deps.length }))}</span>` : '')
+        + (missing.length ? ` — ${esc(t('offline.toDownload', { n: missing.length }))}` : '');
     } catch {
-      if (token === offline.depsToken) box.textContent = 'Dépendances indisponibles (Workshop injoignable) : seuls les mods cochés seront chargés.';
+      if (token === offline.depsToken) box.textContent = t('offline.depsUnavailable');
     }
   }, 350);
 }
@@ -601,22 +628,22 @@ $('#off-preset').addEventListener('change', (e) => {
   const known = new Set(state.mods.map((m) => m.id));
   const absent = p.ids.filter((id) => !known.has(id));
   offline.selected = p.ids.filter((id) => known.has(id));
-  if (absent.length) toast(`${absent.length} mod(s) du préréglage ne sont plus installés`, 'error');
+  if (absent.length) toast(t('offline.presetMissing', { n: absent.length }), 'error');
   renderOffline();
 });
 $('#off-preset-save').addEventListener('click', async () => {
-  if (!offline.selected.length) return toast('Cochez au moins un mod', 'error');
-  const name = (window.prompt('Nom du préréglage :', $('#off-preset').value || 'Éditeur') || '').trim();
+  if (!offline.selected.length) return toast(t('offline.checkOne'), 'error');
+  const name = (window.prompt(t('offline.presetName'), $('#off-preset').value || t('offline.presetDefault')) || '').trim();
   if (!name) return;
   offline.presets = await api.presets.save(name, offline.selected);
   renderPresets();
   $('#off-preset').value = name;
   $('#off-preset-delete').disabled = false;
-  toast(`Préréglage « ${name} » enregistré`, 'ok');
+  toast(t('offline.presetSaved', { name }), 'ok');
 });
 $('#off-preset-delete').addEventListener('click', async () => {
   const name = $('#off-preset').value;
-  if (!name || !window.confirm(`Supprimer le préréglage « ${name} » ?`)) return;
+  if (!name || !window.confirm(t('offline.presetDeleteConfirm', { name }))) return;
   offline.presets = await api.presets.delete(name);
   renderPresets();
 });
@@ -627,7 +654,7 @@ $('#off-launch').addEventListener('click', async () => {
   api.offline.remember(opts).catch(() => {});
   if (state.init) state.init.offlineLaunch = opts;
   closeOffline();
-  overlay.open('Lancement de DayZ', offline.selected.length ? 'Préparation des mods…' : 'Lancement sans serveur…');
+  overlay.open(t('offline.launching'), t(offline.selected.length ? 'offline.preparingMods' : 'offline.noServer'));
   try {
     await api.game.join({ server: null, extraMods: selectedMods(), battlEye });
   } catch (e) {
@@ -646,7 +673,7 @@ $('#btn-refresh').addEventListener('click', () => {
 // Mods
 // ---------------------------------------------------------------------------
 async function loadMods() {
-  $('#mods-summary').textContent = 'Analyse des mods installés et vérification des mises à jour…';
+  $('#mods-summary').textContent = t('mods.analyzing');
   $('#btn-mods-check').disabled = true;
   try {
     state.mods = await api.mods.list();
@@ -668,9 +695,12 @@ function renderMods() {
   const orphans = state.mods.filter((m) => m.orphan);
   const total = state.mods.reduce((n, m) => n + m.size, 0);
 
-  $('#mods-summary').innerHTML = `<b>${state.mods.length}</b> mod(s) installé(s) — <b>${fmtSize(total)}</b> sur le disque — `
-    + (outdated.length ? `<b style="color:var(--warn)">${outdated.length}</b> mise(s) à jour disponible(s)` : 'tout est à jour')
-    + (orphans.length ? ` — <b>${orphans.length}</b> dossier(s) orphelin(s) non suivis par Steam` : '');
+  // Les modèles de ces clés contiennent du HTML (<b>) : seules les valeurs insérées sont des nombres.
+  $('#mods-summary').innerHTML = [
+    t('mods.summary', { n: state.mods.length, size: esc(fmtSize(total)) }),
+    outdated.length ? t('mods.updatesAvailable', { n: outdated.length }) : esc(t('mods.allUpToDate')),
+    orphans.length ? t('mods.orphans', { n: orphans.length }) : '',
+  ].filter(Boolean).join(' — ');
   const badge = $('#mods-badge');
   badge.textContent = outdated.length;
   badge.classList.toggle('hidden', !outdated.length);
@@ -679,24 +709,24 @@ function renderMods() {
   $('#btn-mods-play').disabled = !state.modSelection.size;
 
   $('#mod-list').innerHTML = list.length ? list.map((m) => {
-    const st = m.removed ? ['removed', 'Retiré du Workshop']
-      : m.orphan ? ['outdated', 'Non abonné (orphelin)']
-        : m.outdated ? ['outdated', 'Mise à jour dispo'] : ['ok', 'À jour'];
+    const st = m.removed ? ['removed', t('mods.status.removed')]
+      : m.orphan ? ['outdated', t('mods.status.orphan')]
+        : m.outdated ? ['outdated', t('mods.status.outdated')] : ['ok', t('mods.status.ok')];
     return `<div class="mod-row">
       <span><input type="checkbox" data-sel="${esc(m.id)}" ${state.modSelection.has(m.id) ? 'checked' : ''}></span>
       <span title="${esc(m.name)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.name)}</span>
       <span style="font-family:Consolas,monospace;color:var(--muted)">${esc(m.id)}</span>
       <span class="num">${fmtSize(m.size)}</span>
       <span>${fmtDate(m.remoteUpdated || m.localUpdated)}</span>
-      <span class="status ${st[0]}">${st[1]}</span>
+      <span class="status ${st[0]}">${esc(st[1])}</span>
       <span class="actions">
-        ${m.outdated ? `<button class="btn" data-update="${esc(m.id)}">Mettre à jour</button>` : ''}
-        ${m.orphan && !m.removed ? `<button class="btn btn-ghost" data-update="${esc(m.id)}" title="Se réabonner via Steam">Réabonner</button>` : ''}
-        <button class="btn btn-ghost" data-folder="${esc(m.id)}" title="Ouvrir le dossier">📁</button>
-        <button class="btn btn-ghost" data-page="${esc(m.id)}" title="Page Workshop">↗</button>
+        ${m.outdated ? `<button class="btn" data-update="${esc(m.id)}">${esc(t('mods.update'))}</button>` : ''}
+        ${m.orphan && !m.removed ? `<button class="btn btn-ghost" data-update="${esc(m.id)}" title="${esc(t('mods.resubscribeTitle'))}">${esc(t('mods.resubscribe'))}</button>` : ''}
+        <button class="btn btn-ghost" data-folder="${esc(m.id)}" title="${esc(t('mods.openFolder'))}">📁</button>
+        <button class="btn btn-ghost" data-page="${esc(m.id)}" title="${esc(t('mods.workshopPage'))}">↗</button>
       </span>
     </div>`;
-  }).join('') : `<div class="table-empty">${state.mods.length ? 'Aucun mod ne correspond.' : 'Aucun mod Workshop installé.'}</div>`;
+  }).join('') : `<div class="table-empty">${esc(t(state.mods.length ? 'mods.noMatch' : 'mods.noneInstalled'))}</div>`;
 }
 
 $('#m-search').addEventListener('input', renderMods);
@@ -706,26 +736,26 @@ $('#m-all').addEventListener('change', (e) => {
   renderMods();
 });
 $('#mod-list').addEventListener('click', async (e) => {
-  const t = e.target;
-  if (t.dataset.sel) {
-    t.checked ? state.modSelection.add(t.dataset.sel) : state.modSelection.delete(t.dataset.sel);
+  const target = e.target;
+  if (target.dataset.sel) {
+    target.checked ? state.modSelection.add(target.dataset.sel) : state.modSelection.delete(target.dataset.sel);
     $('#btn-mods-remove').disabled = !state.modSelection.size;
     $('#btn-mods-play').disabled = !state.modSelection.size;
-  } else if (t.dataset.update) {
-    await downloadMods([t.dataset.update], 'Mise à jour du mod');
-  } else if (t.dataset.folder) {
-    api.mods.openFolder(t.dataset.folder);
-  } else if (t.dataset.page) {
-    api.mods.openPage(t.dataset.page);
+  } else if (target.dataset.update) {
+    await downloadMods([target.dataset.update], t('mods.updatingOne'));
+  } else if (target.dataset.folder) {
+    api.mods.openFolder(target.dataset.folder);
+  } else if (target.dataset.page) {
+    api.mods.openPage(target.dataset.page);
   }
 });
 
 async function downloadMods(ids, title) {
-  overlay.open(title, 'Demande de téléchargement à Steam…');
+  overlay.open(title, t('mods.requestingSteam'));
   try {
     await api.mods.download(ids);
     overlay.close();
-    toast(`${ids.length} mod(s) à jour`, 'ok');
+    toast(t('mods.updatedToast', { n: ids.length }), 'ok');
   } catch (e) {
     overlay.fail(e.message);
   }
@@ -735,25 +765,25 @@ async function downloadMods(ids, title) {
 $('#btn-mods-check').addEventListener('click', loadMods);
 $('#btn-mods-update').addEventListener('click', () => {
   const ids = state.mods.filter((m) => m.outdated).map((m) => m.id);
-  if (ids.length) downloadMods(ids, `Mise à jour de ${ids.length} mod(s)`);
+  if (ids.length) downloadMods(ids, t('mods.updatingN', { n: ids.length }));
 });
 $('#btn-mod-add').addEventListener('click', () => {
   const v = $('#m-add-id').value.trim();
   const id = (v.match(/id=(\d+)/) || v.match(/^(\d{6,})$/) || [])[1];
-  if (!id) return toast('ID ou lien Workshop invalide', 'error');
+  if (!id) return toast(t('mods.invalidId'), 'error');
   $('#m-add-id').value = '';
-  downloadMods([id], 'Installation du mod');
+  downloadMods([id], t('mods.installing'));
 });
 $('#btn-mods-remove').addEventListener('click', async () => {
   const ids = [...state.modSelection];
   if (!ids.length) return;
-  if (!window.confirm(`Désinstaller ${ids.length} mod(s) ? Les mods abonnés seront désabonnés (Steam les supprime), puis leurs dossiers seront supprimés du disque.`)) return;
+  if (!window.confirm(t('mods.removeConfirm', { n: ids.length }))) return;
   try {
     const r = await api.mods.remove(ids);
-    if (r.removed.length) toast(`${r.removed.length} mod(s) supprimé(s) du disque`, 'ok');
+    if (r.removed.length) toast(t('mods.removedToast', { n: r.removed.length }), 'ok');
     if (r.failed.length) {
       const names = r.failed.slice(0, 5).map((f) => `${state.mods.find((m) => m.id === f.id)?.name || f.id} : ${f.error}`);
-      toast(`${r.failed.length} mod(s) non supprimé(s) — ${names.join(' ; ')}`, 'error');
+      toast(t('mods.failedToast', { n: r.failed.length, list: names.join(' ; ') }), 'error');
     }
   } catch (e) {
     toast(e.message, 'error');
@@ -773,16 +803,22 @@ function fillSettings(s) {
   }
 }
 
+function fillLanguageSelect(languages = []) {
+  $('#language-select').innerHTML = `<option value="auto">${esc(t('settings.languageAuto'))}</option>`
+    + languages.map((l) => `<option value="${esc(l.code)}">${esc(l.name)}</option>`).join('');
+  $('#language-select').value = state.init?.settings.language || 'auto';
+}
+
 function renderInstall(init) {
   const el = $('#install-state');
   if (init.install.dayzPath) {
     el.className = 'install-state';
     el.textContent = init.install.dayzPath;
-    $('#build-info').textContent = init.buildId ? `Build Steam ${init.buildId}` : 'DayZ détecté';
+    $('#build-info').textContent = init.buildId ? t('install.build', { id: init.buildId }) : t('install.detected');
   } else {
     el.className = 'install-state bad';
-    el.textContent = 'DayZ introuvable — indiquez le dossier dans les paramètres.';
-    $('#build-info').textContent = 'DayZ non détecté';
+    el.textContent = t('install.notFound');
+    $('#build-info').textContent = t('install.notDetected');
   }
 }
 
@@ -795,11 +831,14 @@ $('#settings-form').addEventListener('submit', async (e) => {
     s[el.name] = el.type === 'checkbox' ? el.checked : el.value.trim();
   }
   try {
+    const previousLanguage = state.init.settings.language || 'auto';
     const r = await api.settings.save(s);
+    // Changement de langue : on recharge l'interface pour tout retraduire.
+    if ((r.settings.language || 'auto') !== previousLanguage) { window.location.reload(); return; }
     state.init.settings = r.settings;
     state.init.install = r.install;
     renderInstall(state.init);
-    toast('Paramètres enregistrés', 'ok');
+    toast(t('settings.saved'), 'ok');
   } catch (err) {
     toast(err.message, 'error');
   }
@@ -815,7 +854,7 @@ $('#btn-clear-history').addEventListener('click', async () => {
   state.history = await api.history.clear();
   updateCounts();
   if (state.tab === 'history') applyFilters();
-  toast('Historique vidé', 'ok');
+  toast(t('settings.historyCleared'), 'ok');
 });
 
 window.addEventListener('resize', () => renderServers(false));
@@ -827,13 +866,14 @@ window.addEventListener('resize', () => renderServers(false));
   try {
     const init = await api.init();
     state.init = init;
+    setLanguage(init.language);
+    fillLanguageSelect(init.languages);
     state.favorites = init.favorites;
     offline.presets = init.modPresets || [];
     state.history = init.history;
     fillSettings(init.settings);
     renderInstall(init);
-    $('#about').textContent = `Chernolink ${init.version} — liste des serveurs : dayzsalauncher.com ; mods : Steam Workshop (via votre client Steam). `
-      + `Workshop : ${init.install.workshopPath || 'introuvable'}`;
+    $('#about').textContent = t('settings.about', { version: init.version, path: init.install.workshopPath || t('common.notFound') });
     updateCounts();
   } catch (e) {
     toast(e.message, 'error');

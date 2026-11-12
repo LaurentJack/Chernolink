@@ -9,6 +9,8 @@ const servers = require('./core/servers');
 const mods = require('./core/mods');
 const { launchGame } = require('./core/launcher');
 const { Store, DEFAULTS } = require('./core/store');
+const i18n = require('./i18n');
+const { t } = i18n;
 
 // Le nom affiché a changé : on conserve le dossier de données d'origine (favoris, paramètres).
 app.setPath('userData', path.join(app.getPath('appData'), 'dayz-launcher'));
@@ -44,7 +46,7 @@ function getWorker() {
   });
   worker.on('exit', () => {
     worker = null;
-    for (const [id, job] of jobs) { job.reject(new Error('Le processus Workshop s\'est arrêté')); jobs.delete(id); }
+    for (const [id, job] of jobs) { job.reject(new Error(t('err.workerStopped'))); jobs.delete(id); }
   });
   return worker;
 }
@@ -53,7 +55,7 @@ function runWorkshop(cmd, ids) {
   return new Promise((resolve, reject) => {
     const jobId = ++jobSeq;
     jobs.set(jobId, { resolve, reject });
-    getWorker().postMessage({ jobId, cmd, ids });
+    getWorker().postMessage({ jobId, cmd, ids, lang: i18n.getLanguage() });
   });
 }
 
@@ -97,22 +99,22 @@ async function joinServer({ server, password, extraMods = [], battlEye }) {
   }
   if (!server && extraMods.length) {
     // Lancement hors serveur : on ajoute les dépendances Workshop (ex. DayZ-Editor → CF, Dabs Framework).
-    send('join:status', { step: 'check', message: 'Recherche des dépendances des mods…' });
+    send('join:status', { step: 'check', message: t('join.searchingDeps') });
     required = await mods.withDependencies(extraMods);
   }
 
-  send('join:status', { step: 'check', message: 'Vérification des mods…' });
+  send('join:status', { step: 'check', message: t('join.checkingMods') });
   const resolved = await mods.resolveServerMods(install, required);
   const removed = resolved.filter((m) => m.removed && m.status === 'missing');
-  if (removed.length) throw new Error(`Mods retirés du Workshop : ${removed.map((m) => m.name).join(', ')}`);
+  if (removed.length) throw new Error(t('join.removedMods', { list: removed.map((m) => m.name).join(', ') }));
 
   const toFetch = resolved.filter((m) => m.status === 'missing' || (settings.autoUpdateMods && m.status === 'outdated'));
   if (toFetch.length) {
-    send('join:status', { step: 'download', message: `Téléchargement de ${toFetch.length} mod(s) via Steam…`, mods: toFetch });
+    send('join:status', { step: 'download', message: t('join.downloading', { n: toFetch.length }), mods: toFetch });
     await runWorkshop('download', toFetch.map((m) => m.id));
   }
 
-  send('join:status', { step: 'launch', message: 'Lancement de DayZ…' });
+  send('join:status', { step: 'launch', message: t('join.launching') });
   const modParam = required.length ? mods.buildModParam(install, required.map((m) => m.id)) : '';
   const result = await launchGame(install, { server, modParam, password, settings });
 
@@ -121,7 +123,7 @@ async function joinServer({ server, password, extraMods = [], battlEye }) {
     history.unshift({ ...serverSnapshot(server), lastPlayed: Date.now() });
     store.set('history', history.slice(0, 50));
   }
-  send('join:status', { step: 'done', message: 'DayZ est lancé. Bon jeu !' });
+  send('join:status', { step: 'done', message: t('join.done') });
   return result;
 }
 
@@ -151,6 +153,8 @@ function registerIpc() {
       modPresets: store.get('modPresets'),
       offlineLaunch: store.get('offlineLaunch'),
       version: app.getVersion(),
+      language: i18n.getLanguage(),
+      languages: i18n.languages,
     };
   });
 
@@ -172,7 +176,7 @@ function registerIpc() {
   ));
   handle('servers:loadManual', () => Promise.all(store.get('manualServers').map(async (m) => {
     try { return await servers.refreshServer(m.ip, m.queryPort, 'manual'); } catch {
-      return servers.normalize({ ip: m.ip, queryPort: m.queryPort, name: `${m.ip}:${m.queryPort} (hors ligne)`, ping: -1 }, 'manual');
+      return servers.normalize({ ip: m.ip, queryPort: m.queryPort, name: t('lan.offlineName', { addr: `${m.ip}:${m.queryPort}` }), ping: -1 }, 'manual');
     }
   })));
 
@@ -223,13 +227,14 @@ function registerIpc() {
 
   handle('settings:save', async (settings) => {
     store.set('settings', { ...store.get('settings'), ...settings });
+    i18n.setLanguage(store.get('settings').language, app.getLocale());
     await detect();
     return { settings: store.get('settings'), install };
   });
   handle('settings:pickDayzPath', async () => {
-    const r = await dialog.showOpenDialog(win, { title: 'Dossier d\'installation de DayZ', properties: ['openDirectory'] });
+    const r = await dialog.showOpenDialog(win, { title: t('settings.pickDayz'), properties: ['openDirectory'] });
     if (r.canceled || !r.filePaths[0]) return null;
-    if (!fs.existsSync(path.join(r.filePaths[0], 'DayZ_x64.exe'))) throw new Error('DayZ_x64.exe introuvable dans ce dossier');
+    if (!fs.existsSync(path.join(r.filePaths[0], 'DayZ_x64.exe'))) throw new Error(t('err.noExe'));
     return r.filePaths[0];
   });
   handle('shell:openDayz', () => install.dayzPath && shell.openPath(install.dayzPath));
@@ -264,6 +269,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   store = new Store(path.join(app.getPath('userData'), 'launcher.json'), DEFAULTS);
+  i18n.setLanguage(store.get('settings').language, app.getLocale());
   registerIpc();
   createWindow();
 });

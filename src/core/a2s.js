@@ -6,6 +6,7 @@
  * les serveurs ajoutés manuellement).
  */
 const dgram = require('dgram');
+const { t } = require('../i18n');
 
 const HEADER = Buffer.from([0xff, 0xff, 0xff, 0xff]);
 const A2S_INFO = Buffer.concat([HEADER, Buffer.from('TSource Engine Query\0', 'latin1')]);
@@ -28,7 +29,7 @@ class Reader {
 
 function parseInfo(buf) {
   const r = new Reader(buf, 4);
-  if (r.u8() !== 0x49) throw new Error('Réponse A2S_INFO invalide');
+  if (r.u8() !== 0x49) throw new Error(t('err.invalidResponse'));
   const info = {
     protocol: r.u8(),
     name: r.str(),
@@ -81,7 +82,7 @@ function request(host, port, payload, { timeout = 2500, expect } = {}) {
       try { sock.close(); } catch { /* déjà fermé */ }
       err ? reject(err) : resolve(val);
     };
-    const timer = setTimeout(() => finish(new Error('Délai dépassé')), timeout);
+    const timer = setTimeout(() => finish(new Error(t('err.timeout'))), timeout);
     const send = (buf) => { sentAt = Date.now(); sock.send(buf, port, host, (e) => e && finish(e)); };
 
     sock.on('error', (e) => finish(e));

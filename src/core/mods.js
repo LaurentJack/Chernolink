@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseVdf } = require('./vdf');
+const { t } = require('../i18n');
 
 const DETAILS_URL = 'https://api.steampowered.com/ISteamRemoteStorage/GetPublishedFileDetails/v1/';
 // Dossier de jonctions créé dans le dossier de DayZ (chemins courts et sans espaces pour -mod=).
@@ -59,7 +60,7 @@ async function fetchDetails(ids) {
     const body = new URLSearchParams({ itemcount: String(batch.length) });
     batch.forEach((id, n) => body.append(`publishedfileids[${n}]`, id));
     const res = await fetch(DETAILS_URL, { method: 'POST', body });
-    if (!res.ok) throw new Error(`API Steam Workshop indisponible (HTTP ${res.status})`);
+    if (!res.ok) throw new Error(t('err.workshopApi', { status: res.status }));
     const data = await res.json();
     for (const d of data.response.publishedfiledetails || []) {
       if (d.result !== 1) { out[d.publishedfileid] = { missing: true }; continue; }
@@ -120,7 +121,7 @@ function buildModParam(install, ids) {
 
   for (const id of ids) {
     const target = path.join(install.workshopPath, id);
-    if (!fs.existsSync(target)) throw new Error(`Le mod ${id} n'est pas téléchargé`);
+    if (!fs.existsSync(target)) throw new Error(t('err.modNotDownloaded', { id }));
     if (canLink) {
       const link = path.join(linkRoot, `@${id}`);
       try {
@@ -169,7 +170,7 @@ async function fetchDependencies(id) {
   const res = await fetch(`https://steamcommunity.com/sharedfiles/filedetails/?id=${encodeURIComponent(id)}`, {
     headers: { 'Accept-Language': 'en' },
   });
-  if (!res.ok) throw new Error(`Page Workshop inaccessible pour ${id} (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(t('err.workshopPage', { id, status: res.status }));
   const deps = parseRequiredItems(await res.text()).filter((d) => d.id !== id);
   depsCache.set(id, deps);
   return deps;
@@ -206,12 +207,12 @@ function removeFolders(install, ids) {
   const removed = [];
   const failed = [];
   for (const id of ids) {
-    if (!/^\d+$/.test(id)) { failed.push({ id, error: 'ID invalide' }); continue; }
+    if (!/^\d+$/.test(id)) { failed.push({ id, error: t('err.invalidId') }); continue; }
     try {
       fs.rmSync(path.join(install.workshopPath, id), { recursive: true, force: true, maxRetries: 3 });
       removed.push(id);
     } catch (e) {
-      failed.push({ id, error: e.code === 'EPERM' || e.code === 'EBUSY' ? 'fichier utilisé (DayZ ou Steam ouvert ?)' : e.message });
+      failed.push({ id, error: e.code === 'EPERM' || e.code === 'EBUSY' ? t('err.fileBusy') : e.message });
     }
   }
   cleanupLinks(install);

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { isProcessRunning } = require('./steam');
+const { t } = require('../i18n');
 
 /**
  * Lance DayZ. Avec BattlEye, on passe par DayZ_BE.exe comme le launcher officiel
@@ -11,9 +12,9 @@ const { isProcessRunning } = require('./steam');
  * (utile pour les serveurs LAN sans BattlEye).
  */
 async function launchGame(install, { server, modParam, password, settings }) {
-  if (!install.dayzPath) throw new Error('Installation de DayZ introuvable');
-  if (!(await isProcessRunning('steam.exe'))) throw new Error('Steam doit être lancé pour jouer à DayZ');
-  if (await isProcessRunning('DayZ_x64.exe')) throw new Error('DayZ est déjà en cours d\'exécution');
+  if (!install.dayzPath) throw new Error(t('err.noInstall'));
+  if (!(await isProcessRunning('steam.exe'))) throw new Error(t('err.steamNotRunning'));
+  if (await isProcessRunning('DayZ_x64.exe')) throw new Error(t('err.alreadyRunning'));
 
   const args = ['-nolauncher', '-nosplash', '-skipIntro', '-world=empty'];
   if (settings.profileName) args.push(`-name=${settings.profileName}`);
